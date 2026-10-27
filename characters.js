@@ -827,7 +827,8 @@ const EQUIPMENT_STAGES = [
   { id: "119", label: "Item Level 119" },
   { id: "119+1", label: "Item Level 119 +1" },
   { id: "119+2", label: "Item Level 119 +2" },
-  { id: "119+3", label: "Item Level 119 +3" }
+  { id: "119+3", label: "Item Level 119 +3" },
+  { id: "119+4", label: "Item Level 119 +4" }
 ];
 
 let selectedEquipmentJob = "WAR";
@@ -1003,9 +1004,16 @@ function renderEquipment() {
           stage => stage.id === currentId
         );
 
-        const nextIndex =
-          (currentIndex + 1) % EQUIPMENT_STAGES.length;
-
+        const maxStage = setId === "empyrean" ? "119+3" : "119+4";
+        
+        const maxIndex = EQUIPMENT_STAGES.findIndex(
+          stage => stage.id === maxStage
+        );
+        
+        const nextIndex = currentIndex >= maxIndex
+          ? 0
+          : currentIndex + 1;
+        
         activeCharacter.equipment[selectedEquipmentJob][setId][slotId] =
           EQUIPMENT_STAGES[nextIndex].id;
 
