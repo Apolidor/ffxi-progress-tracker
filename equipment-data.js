@@ -1,3 +1,29 @@
+
+const EQUIPMENT_SETS = [
+  { id: "af", name: "Artifact Armor (AF)", max: 4 },
+  { id: "relic", name: "Relic Armor", max: 4 },
+  { id: "empyrean", name: "Empyrean Armor", max: 3 }
+];
+
+const EQUIPMENT_SLOTS = [
+  { id: "head", name: "Head", icon: "🪖" },
+  { id: "body", name: "Body", icon: "🥋" },
+  { id: "hands", name: "Hands", icon: "🧤" },
+  { id: "legs", name: "Legs", icon: "👖" },
+  { id: "feet", name: "Feet", icon: "🥾" }
+];
+
+const EQUIPMENT_STAGES = [
+  { id: "none", label: "Not obtained" },
+  { id: "base", label: "Base version" },
+  { id: "109", label: "Item Level 109" },
+  { id: "119", label: "Item Level 119" },
+  { id: "119+1", label: "Item Level 119 +1" },
+  { id: "119+2", label: "Item Level 119 +2" },
+  { id: "119+3", label: "Item Level 119 +3" },
+  { id: "119+4", label: "Item Level 119 +4" }
+];
+
 const EQUIPMENT_ITEMS = {
   WAR: {
     af: {
@@ -29,13 +55,15 @@ function getEquipmentItemName(jobCode, setId, slotId) {
 
   return typeof item === "string"
     ? item
-    : item?.name
-      || EQUIPMENT_SLOTS.find(slot => slot.id === slotId)?.name
-      || slotId;
+    : item?.name ||
+      EQUIPMENT_SLOTS.find(slot => slot.id === slotId)?.name ||
+      slotId;
 }
 
 function getEquipmentIconId(jobCode, setId, slotId) {
   const item = EQUIPMENT_ITEMS[jobCode]?.[setId]?.[slotId];
 
-  return typeof item === "object" ? item.iconId : null;
+  return typeof item === "object" && item !== null
+    ? item.iconId
+    : null;
 }
