@@ -807,8 +807,8 @@ function renderDashboardJobSummary() {
 }
 
 const EQUIPMENT_SETS = [
-  { id: "af", name: "Artifact Armor (AF)", max: 3 },
-  { id: "relic", name: "Relic Armor", max: 3 },
+  { id: "af", name: "Artifact Armor (AF)", max: 4 },
+  { id: "relic", name: "Relic Armor", max: 4 },
   { id: "empyrean", name: "Empyrean Armor", max: 3 }
 ];
 
