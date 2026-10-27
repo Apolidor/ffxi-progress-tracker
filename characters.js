@@ -807,8 +807,8 @@ function renderDashboardJobSummary() {
 }
 
 const EQUIPMENT_SETS = [
-  { id: "af", name: "Artifact Armor (AF)", max: 4 },
-  { id: "relic", name: "Relic Armor", max: 4 },
+  { id: "af", name: "Artifact Armor (AF)", max: 3 },
+  { id: "relic", name: "Relic Armor", max: 3 },
   { id: "empyrean", name: "Empyrean Armor", max: 3 }
 ];
 
@@ -818,6 +818,16 @@ const EQUIPMENT_SLOTS = [
   { id: "hands", name: "Hands" },
   { id: "legs", name: "Legs" },
   { id: "feet", name: "Feet" }
+];
+
+const EQUIPMENT_STAGES = [
+  { id: "none", label: "Not obtained" },
+  { id: "base", label: "Base version" },
+  { id: "109", label: "Item Level 109" },
+  { id: "119", label: "Item Level 119" },
+  { id: "119+1", label: "Item Level 119 +1" },
+  { id: "119+2", label: "Item Level 119 +2" },
+  { id: "119+3", label: "Item Level 119 +3" }
 ];
 
 let selectedEquipmentJob = "WAR";
@@ -853,13 +863,11 @@ function normalizeEquipmentProgress(saved) {
       EQUIPMENT_SLOTS.forEach(slot => {
         const value = saved?.[job.code]?.[set.id]?.[slot.id];
 
-        const allowed = ["none", "base", "109", "119+1"];
+        const stageIndex = EQUIPMENT_STAGES.findIndex(
+          stage => stage.id === value
+        );
 
-        for (let level = 2; level <= set.max; level++) {
-          allowed.push(`119+${level}`);
-        }
-
-        if (allowed.includes(value)) {
+        if (stageIndex !== -1) {
           result[job.code][set.id][slot.id] = value;
         }
       });
@@ -897,12 +905,12 @@ function renderEquipment() {
     activeCharacter.equipment
   );
 
-  const jobs = activeCharacter.equipment;
-  const progress = jobs[selectedEquipmentJob];
+  const progress = activeCharacter.equipment[selectedEquipmentJob];
 
   container.innerHTML = `
     <div style="margin-bottom:20px">
       <label for="equipment-job-select">Select job</label>
+
       <select id="equipment-job-select"
         style="display:block;width:100%;max-width:360px;padding:10px;
         margin-top:7px;background:var(--bg);color:var(--text);
@@ -918,12 +926,13 @@ function renderEquipment() {
 
     <div class="equipment-set-grid">
       ${EQUIPMENT_SETS.map(set => {
-        const pieces = EQUIPMENT_SLOTS.map(slot =>
-          progress[set.id][slot.id]
+        const pieces = EQUIPMENT_SLOTS.map(
+          slot => progress[set.id][slot.id]
         );
 
-        const obtained = pieces.filter(value => value !== "none").length;
-        const complete = obtained === EQUIPMENT_SLOTS.length;
+        const obtained = pieces.filter(
+          value => value !== "none"
+        ).length;
 
         return `
           <div class="equipment-set-card">
@@ -933,55 +942,77 @@ function renderEquipment() {
             </div>
 
             <div class="equipment-piece-list">
-              ${EQUIPMENT_SLOTS.map(slot => `
-                <div class="equipment-piece">
-                  <label for="equipment-${set.id}-${slot.id}">
-                    ${slot.name}
-                  </label>
+              ${EQUIPMENT_SLOTS.map(slot => {
+                const stageId = progress[set.id][slot.id];
 
-                  <select
-                    id="equipment-${set.id}-${slot.id}"
+                const stage = EQUIPMENT_STAGES.find(
+                  item => item.id === stageId
+                );
+
+                return `
+                  <button type="button"
+                    class="equipment-piece-button"
                     data-equipment-set="${set.id}"
                     data-equipment-slot="${slot.id}">
-                    ${equipmentStageOptions(set.max)}
-                  </select>
-                </div>
-              `).join("")}
+
+                    <span class="equipment-piece-icon">
+                      ${stageId === "none" ? "○" : "✓"}
+                    </span>
+
+                    <span class="equipment-piece-info">
+                      <strong>${slot.name}</strong>
+                      <small>${stage?.label || "Not obtained"}</small>
+                    </span>
+
+                    <span class="equipment-piece-next">›</span>
+                  </button>
+                `;
+              }).join("")}
             </div>
 
             <div class="equipment-completion">
-              ${complete ? "✓ Set collected" : `${5 - obtained} pieces remaining`}
+              ${obtained === 5
+                ? "✓ Set collected"
+                : `${5 - obtained} pieces remaining`}
             </div>
           </div>
         `;
       }).join("")}
     </div>
 
-    <div id="equipment-save-status" class="ffxi-save-status"
-      role="status">Ready</div>
+    <div id="equipment-save-status"
+      class="ffxi-save-status" role="status">Ready</div>
   `;
 
-  const selector = document.getElementById("equipment-job-select");
-
-  selector.addEventListener("change", () => {
-    selectedEquipmentJob = selector.value;
-    renderEquipment();
-  });
-
-  container.querySelectorAll("[data-equipment-set]").forEach(select => {
-    const setId = select.dataset.equipmentSet;
-    const slotId = select.dataset.equipmentSlot;
-
-    select.value = progress[setId][slotId];
-
-    select.addEventListener("change", () => {
-      activeCharacter.equipment[selectedEquipmentJob][setId][slotId] =
-        select.value;
-
-      updateEquipmentSetSummary(setId);
-      saveEquipmentSoon();
+  document.getElementById("equipment-job-select")
+    .addEventListener("change", event => {
+      selectedEquipmentJob = event.target.value;
+      renderEquipment();
     });
-  });
+
+  container.querySelectorAll(".equipment-piece-button")
+    .forEach(button => {
+      button.addEventListener("click", () => {
+        const setId = button.dataset.equipmentSet;
+        const slotId = button.dataset.equipmentSlot;
+
+        const currentId =
+          activeCharacter.equipment[selectedEquipmentJob][setId][slotId];
+
+        const currentIndex = EQUIPMENT_STAGES.findIndex(
+          stage => stage.id === currentId
+        );
+
+        const nextIndex =
+          (currentIndex + 1) % EQUIPMENT_STAGES.length;
+
+        activeCharacter.equipment[selectedEquipmentJob][setId][slotId] =
+          EQUIPMENT_STAGES[nextIndex].id;
+
+        renderEquipment();
+        saveEquipmentSoon();
+      });
+    });
 }
 
 function updateEquipmentSetSummary(setId) {
@@ -1117,6 +1148,52 @@ function injectEquipmentStyles() {
       margin-top:14px;
       color:var(--accent);
       font-size:12px;
+    }
+
+    .equipment-piece-button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 8px;
+      margin: 5px 0;
+      text-align: left;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    
+    .equipment-piece-button:hover {
+      border-color: var(--accent);
+    }
+    
+    .equipment-piece-icon {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      border-radius: 7px;
+      background: var(--panel2);
+    }
+    
+    .equipment-piece-info {
+      display: grid;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .equipment-piece-info small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+    
+    .equipment-piece-next {
+      font-size: 22px;
+      color: var(--muted);
     }
   `;
 
