@@ -182,7 +182,8 @@ db.auth.getSession().then(({ data, error }) => {
   }
 
   if (data.session) {
-    loadProgress();
+    loadProgress(
     await initCharacters();
+    );
   }
 });
