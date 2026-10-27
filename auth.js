@@ -150,7 +150,8 @@ async function loadProgress() {
       await db.auth.signOut();
       location.reload();
     });
-  }
+  }    
+  await initCharacters();
 }
 
 async function saveProgress() {
@@ -182,8 +183,6 @@ db.auth.getSession().then(({ data, error }) => {
   }
 
   if (data.session) {
-    loadProgress(
-    await initCharacters();
-    );
+    loadProgress();
   }
 });
