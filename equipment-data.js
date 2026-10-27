@@ -27,7 +27,15 @@ const EQUIPMENT_STAGES = [
 const EQUIPMENT_ITEMS = {
   WAR: {
     af: {
-      head: { name: "Pummeler's Mask", iconId: 27663 },
+      head: {
+        name: "Pummeler's Mask",
+        iconId: 27663,
+        iconIds: {
+          "119": 27663,
+          "119+1": 23040,
+          "119+2": 23375
+        }
+      },
       body: { name: "Pummeler's Lorica", iconId: 27807 },
       hands: { name: "Pummeler's Mufflers", iconId: 27943 },
       legs: { name: "Pummeler's Cuisses", iconId: null },
@@ -65,6 +73,5 @@ function getEquipmentIconId(jobCode, setId, slotId, stageId) {
 
   if (!item || typeof item !== "object") return null;
 
-  // Unterstützt sowohl einzelne IDs als auch IDs je Ausbaustufe.
   return item.iconIds?.[stageId] ?? item.iconId ?? null;
 }
