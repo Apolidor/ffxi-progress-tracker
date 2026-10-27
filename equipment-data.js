@@ -60,10 +60,11 @@ function getEquipmentItemName(jobCode, setId, slotId) {
       slotId;
 }
 
-function getEquipmentIconId(jobCode, setId, slotId) {
+function getEquipmentIconId(jobCode, setId, slotId, stageId) {
   const item = EQUIPMENT_ITEMS[jobCode]?.[setId]?.[slotId];
 
-  return typeof item === "object" && item !== null
-    ? item.iconId
-    : null;
+  if (!item || typeof item !== "object") return null;
+
+  // Unterstützt sowohl einzelne IDs als auch IDs je Ausbaustufe.
+  return item.iconIds?.[stageId] ?? item.iconId ?? null;
 }
