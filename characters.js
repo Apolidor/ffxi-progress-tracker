@@ -257,7 +257,8 @@ async function createCharacter(event) {
       race,
       gender,
       avatar_key: `${race}_${gender}`,
-      jobs: defaultJobProgress()
+      jobs: defaultJobProgress(),
+      equipment: defaultEquipmentProgress()
     })
     .select()
     .single();
@@ -269,7 +270,8 @@ async function createCharacter(event) {
 
   const character = {
     ...data,
-    jobs: normalizeJobProgress(data.jobs)
+    jobs: normalizeJobProgress(data.jobs),
+  equipment: normalizeEquipmentProgress(data.equipment)
   };
 
   characters.push(character);
@@ -316,6 +318,7 @@ function selectCharacter(id) {
   if (selected) selected.classList.add("character-selected");
 
   renderCharacterJobs();
+  renderEquipment();
 }
 
 function renderCharacterManager() {
@@ -801,4 +804,321 @@ function renderDashboardJobSummary() {
     : `<div class="empty">
         Set your job levels in Jobs &amp; Level to see progress here.
       </div>`;
+
+const EQUIPMENT_SETS = [
+  { id: "af", name: "Artifact Armor (AF)", max: 4 },
+  { id: "relic", name: "Relic Armor", max: 4 },
+  { id: "empyrean", name: "Empyrean Armor", max: 3 }
+];
+
+const EQUIPMENT_SLOTS = [
+  { id: "head", name: "Head" },
+  { id: "body", name: "Body" },
+  { id: "hands", name: "Hands" },
+  { id: "legs", name: "Legs" },
+  { id: "feet", name: "Feet" }
+];
+
+let selectedEquipmentJob = "WAR";
+let equipmentSaveTimer = null;
+
+function defaultEquipmentProgress() {
+  const result = {};
+
+  FFXI_JOBS.forEach(job => {
+    result[job.code] = {};
+
+    EQUIPMENT_SETS.forEach(set => {
+      result[job.code][set.id] = {};
+
+      EQUIPMENT_SLOTS.forEach(slot => {
+        result[job.code][set.id][slot.id] = "none";
+      });
+    });
+  });
+
+  return result;
 }
+
+function normalizeEquipmentProgress(saved) {
+  const result = defaultEquipmentProgress();
+
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
+    return result;
+  }
+
+  FFXI_JOBS.forEach(job => {
+    EQUIPMENT_SETS.forEach(set => {
+      EQUIPMENT_SLOTS.forEach(slot => {
+        const value = saved?.[job.code]?.[set.id]?.[slot.id];
+
+        const allowed = ["none", "base", "109", "119+1"];
+
+        for (let level = 2; level <= set.max; level++) {
+          allowed.push(`119+${level}`);
+        }
+
+        if (allowed.includes(value)) {
+          result[job.code][set.id][slot.id] = value;
+        }
+      });
+    });
+  });
+
+  return result;
+}
+
+function equipmentStageOptions(maxLevel) {
+  const stages = [
+    ["none", "Not obtained"],
+    ["base", "Base version"],
+    ["109", "Item Level 109"],
+    ["119+1", "Item Level 119 +1"]
+  ];
+
+  for (let level = 2; level <= maxLevel; level++) {
+    stages.push([`119+${level}`, `Item Level 119 +${level}`]);
+  }
+
+  return stages.map(([value, label]) =>
+    `<option value="${value}">${label}</option>`
+  ).join("");
+}
+
+function renderEquipment() {
+  const container = document.getElementById("gear-list");
+
+  if (!container || !activeCharacter) return;
+
+  injectEquipmentStyles();
+
+  activeCharacter.equipment = normalizeEquipmentProgress(
+    activeCharacter.equipment
+  );
+
+  const jobs = activeCharacter.equipment;
+  const progress = jobs[selectedEquipmentJob];
+
+  container.innerHTML = `
+    <div style="margin-bottom:20px">
+      <label for="equipment-job-select">Select job</label>
+      <select id="equipment-job-select"
+        style="display:block;width:100%;max-width:360px;padding:10px;
+        margin-top:7px;background:var(--bg);color:var(--text);
+        border:1px solid var(--border);border-radius:8px">
+        ${FFXI_JOBS.map(job => `
+          <option value="${job.code}"
+            ${job.code === selectedEquipmentJob ? "selected" : ""}>
+            ${job.code} — ${job.name}
+          </option>
+        `).join("")}
+      </select>
+    </div>
+
+    <div class="equipment-set-grid">
+      ${EQUIPMENT_SETS.map(set => {
+        const pieces = EQUIPMENT_SLOTS.map(slot =>
+          progress[set.id][slot.id]
+        );
+
+        const obtained = pieces.filter(value => value !== "none").length;
+        const complete = obtained === EQUIPMENT_SLOTS.length;
+
+        return `
+          <div class="equipment-set-card">
+            <div class="equipment-set-heading">
+              <h3>${set.name}</h3>
+              <span class="tag">${obtained}/5</span>
+            </div>
+
+            <div class="equipment-piece-list">
+              ${EQUIPMENT_SLOTS.map(slot => `
+                <div class="equipment-piece">
+                  <label for="equipment-${set.id}-${slot.id}">
+                    ${slot.name}
+                  </label>
+
+                  <select
+                    id="equipment-${set.id}-${slot.id}"
+                    data-equipment-set="${set.id}"
+                    data-equipment-slot="${slot.id}">
+                    ${equipmentStageOptions(set.max)}
+                  </select>
+                </div>
+              `).join("")}
+            </div>
+
+            <div class="equipment-completion">
+              ${complete ? "✓ Set collected" : `${5 - obtained} pieces remaining`}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+
+    <div id="equipment-save-status" class="ffxi-save-status"
+      role="status">Ready</div>
+  `;
+
+  const selector = document.getElementById("equipment-job-select");
+
+  selector.addEventListener("change", () => {
+    selectedEquipmentJob = selector.value;
+    renderEquipment();
+  });
+
+  container.querySelectorAll("[data-equipment-set]").forEach(select => {
+    const setId = select.dataset.equipmentSet;
+    const slotId = select.dataset.equipmentSlot;
+
+    select.value = progress[setId][slotId];
+
+    select.addEventListener("change", () => {
+      activeCharacter.equipment[selectedEquipmentJob][setId][slotId] =
+        select.value;
+
+      updateEquipmentSetSummary(setId);
+      saveEquipmentSoon();
+    });
+  });
+}
+
+function updateEquipmentSetSummary(setId) {
+  const set = EQUIPMENT_SETS.find(item => item.id === setId);
+  const progress = activeCharacter?.equipment?.[selectedEquipmentJob]?.[setId];
+
+  if (!set || !progress) return;
+
+  const obtained = EQUIPMENT_SLOTS.filter(
+    slot => progress[slot.id] !== "none"
+  ).length;
+
+  const card = document.querySelector(
+    `.equipment-set-card select[data-equipment-set="${setId}"]`
+  )?.closest(".equipment-set-card");
+
+  if (!card) return;
+
+  const tag = card.querySelector(".equipment-set-heading .tag");
+  const completion = card.querySelector(".equipment-completion");
+
+  if (tag) tag.textContent = `${obtained}/5`;
+
+  if (completion) {
+    completion.textContent = obtained === 5
+      ? "✓ Set collected"
+      : `${5 - obtained} pieces remaining`;
+  }
+}
+
+function saveEquipmentSoon() {
+  const status = document.getElementById("equipment-save-status");
+
+  if (status) status.textContent = "Saving…";
+
+  if (equipmentSaveTimer) {
+    clearTimeout(equipmentSaveTimer);
+  }
+
+  equipmentSaveTimer = setTimeout(saveCharacterEquipment, 400);
+}
+
+async function saveCharacterEquipment() {
+  if (!activeCharacter || !currentUser) return;
+
+  const characterId = activeCharacter.id;
+  const equipmentToSave = normalizeEquipmentProgress(
+    activeCharacter.equipment
+  );
+
+  const { error } = await db
+    .from("characters")
+    .update({
+      equipment: equipmentToSave,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", characterId)
+    .eq("user_id", currentUser.id);
+
+  const status = document.getElementById("equipment-save-status");
+
+  if (error) {
+    if (status) {
+      status.textContent = "Save failed: " + error.message;
+    }
+    return;
+  }
+
+  const character = characters.find(item => item.id === characterId);
+
+  if (character) {
+    character.equipment = equipmentToSave;
+  }
+
+  if (status && activeCharacter?.id === characterId) {
+    status.textContent = "✓ Saved online";
+  }
+}
+
+function injectEquipmentStyles() {
+  if (document.getElementById("ffxi-equipment-styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "ffxi-equipment-styles";
+
+  style.textContent = `
+    .equipment-set-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:15px;
+    }
+
+    .equipment-set-card {
+      padding:16px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--panel);
+      min-width:0;
+    }
+
+    .equipment-set-heading {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:16px;
+    }
+
+    .equipment-piece {
+      display:grid;
+      grid-template-columns:65px minmax(0,1fr);
+      align-items:center;
+      gap:10px;
+      margin:10px 0;
+    }
+
+    .equipment-piece label {
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .equipment-piece select {
+      width:100%;
+      min-width:0;
+      padding:9px 7px;
+      color:var(--text);
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-radius:7px;
+    }
+
+    .equipment-completion {
+      margin-top:14px;
+      color:var(--accent);
+      font-size:12px;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
