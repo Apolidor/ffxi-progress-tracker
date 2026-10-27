@@ -108,7 +108,8 @@ async function initCharacters() {
 
   characters = (data || []).map(character => ({
     ...character,
-    jobs: normalizeJobProgress(character.jobs)
+    jobs: normalizeJobProgress(character.jobs),
+  equipment: normalizeEquipmentProgress(character.equipment)
   }));
 
   const savedId = localStorage.getItem(
