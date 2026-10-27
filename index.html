@@ -1,0 +1,402 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vana'diel — Progress Tracker</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0c1018;
+  --panel: #141b27;
+  --panel2: #1a2433;
+  --border: #293447;
+  --text: #eef3fa;
+  --muted: #91a0b6;
+  --accent: #79e0d0;
+  --gold: #e7be76;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, sans-serif;
+}
+button, input { font: inherit; }
+button { cursor: pointer; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 235px;
+  padding: 26px 16px;
+  border-right: 1px solid var(--border);
+  background: #101620;
+  flex-shrink: 0;
+}
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 38px; }
+.brand-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: #263d4c; color: var(--accent); font-size: 23px;
+}
+.brand h2 { font-size: 16px; letter-spacing: 2px; margin: 0; }
+.brand small { color: var(--muted); font-size: 10px; letter-spacing: 1px; }
+.nav-label {
+  color: #697a92; font-size: 10px; letter-spacing: 1.7px;
+  margin: 24px 10px 8px;
+}
+.nav {
+  display: flex; width: 100%; gap: 12px; align-items: center;
+  border: 0; border-radius: 9px; padding: 12px;
+  color: var(--muted); background: transparent; text-align: left;
+  margin: 3px 0;
+}
+.nav:hover, .nav.active { background: #202d3d; color: var(--accent); }
+.main { flex: 1; min-width: 0; padding: 30px clamp(18px, 4vw, 54px); }
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--border);
+}
+.eyebrow { color: var(--accent); font-size: 11px; letter-spacing: 2px; }
+.profile { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: grid; place-items: center; background: #293b4b; color: var(--accent);
+}
+h1 { font-size: clamp(25px, 3vw, 35px); line-height: 1.2; margin: 10px 0; }
+h2 { font-size: 18px; margin: 0; }
+h3 { font-size: 14px; margin: 0; }
+p { color: var(--muted); }
+.welcome { margin: 30px 0 25px; }
+.welcome p { margin: 8px 0; }
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
+.card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px; min-width: 0;
+}
+.stat-label { color: var(--muted); font-size: 12px; }
+.stat-value { font-size: 28px; font-weight: 700; margin: 8px 0 3px; }
+.stat-icon { font-size: 21px; margin-bottom: 14px; }
+.accent { color: var(--accent); }
+.gold { color: var(--gold); }
+.content-grid {
+  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(270px, 1fr);
+  gap: 18px; margin-top: 22px;
+}
+.section-head {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin-bottom: 20px;
+}
+.tag {
+  border: 1px solid var(--border); border-radius: 7px;
+  padding: 5px 8px; color: var(--muted); font-size: 11px;
+}
+.job { margin: 20px 0; }
+.job-top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.job-name { display: flex; gap: 10px; align-items: center; }
+.job-icon {
+  display: grid; place-items: center; width: 37px; height: 37px;
+  border-radius: 10px; background: var(--panel2); font-size: 19px;
+}
+.job-meta { color: var(--muted); font-size: 12px; }
+.track { height: 6px; background: #293447; border-radius: 20px; overflow: hidden; }
+.fill { height: 100%; border-radius: 20px; background: var(--accent); }
+.goal {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.goal:last-child { border-bottom: 0; padding-bottom: 0; }
+.goal input { accent-color: var(--accent); width: 17px; height: 17px; margin-top: 3px; }
+.goal label { flex: 1; cursor: pointer; }
+.goal small { display: block; color: var(--muted); margin-top: 3px; }
+.goal.done label > span { text-decoration: line-through; color: var(--muted); }
+button.action {
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel2); color: var(--text); padding: 8px 12px;
+}
+button.action:hover { border-color: var(--accent); color: var(--accent); }
+.page { display: none; }
+.page.active { display: block; }
+.notice {
+  margin-top: 20px; padding: 14px 16px; border-radius: 10px;
+  border: 1px solid #31483f; background: #14251f; color: #b9d9cf;
+  font-size: 12px;
+}
+.empty { padding: 35px 0; color: var(--muted); text-align: center; }
+@media (max-width: 1000px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .content-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 650px) {
+  .layout { display: block; }
+  .sidebar { width: 100%; padding: 12px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .brand { margin: 0 8px 12px; }
+  .nav-label { display: none; }
+  .nav-list { display: flex; overflow-x: auto; gap: 4px; }
+  .nav { white-space: nowrap; width: auto; padding: 9px 11px; }
+  .main { padding: 20px 15px; }
+  .grid { gap: 10px; }
+  .card { padding: 15px; }
+  .stat-value { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">⚔</div>
+      <div>
+        <h2>VANA'DIEL</h2>
+        <small>ADVENTURER'S COMPANION</small>
+      </div>
+    </div>
+
+    <div class="nav-label">CHARAKTER</div>
+    <div class="nav-list">
+      <button class="nav active" data-page="dashboard">◈ Übersicht</button>
+      <button class="nav" data-page="jobs">⚔ Jobs & Level</button>
+      <button class="nav" data-page="equipment">◇ Ausrüstung</button>
+      <button class="nav" data-page="goals">☑ Ziele & Erfolge</button>
+      <button class="nav" data-page="collection">✧ Sammlung</button>
+    </div>
+    <div class="nav-label">SYSTEM</div>
+    <button class="nav" id="reset">↻ Beispieldaten zurücksetzen</button>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">FINAL FANTASY XI</div>
+        <div style="font-weight:600">Persönlicher Progress Tracker</div>
+      </div>
+      <div class="profile">
+        <div class="avatar">✦</div>
+        <span>Mein Charakter</span>
+      </div>
+    </header>
+
+    <section class="page active" id="dashboard">
+      <div class="welcome">
+        <div class="eyebrow">CHARACTER OVERVIEW</div>
+        <h1>Deine Reise geht weiter.</h1>
+        <p>Alle wichtigen Fortschritte in Vana'diel auf einen Blick.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="stat-icon accent">⚔</div>
+          <div class="stat-label">Hauptjob</div>
+          <div class="stat-value">PLD <span style="font-size:15px">75</span></div>
+          <div class="stat-label">Paladin</div>
+        </div>
+        <div class="card">
+          <div class="stat-icon gold">✦</div>
+          <div class="stat-label">Ziele erledigt</div>
+          <div class="stat-value" id="goal-count">0 / 5</div>
+          <div class="stat-label">Persönliche Checkliste</div>
+        </div>
+        <div class="card">
+          <div class="stat-icon accent">◇</div>
+          <div class="stat-label">Ausrüstung</div>
+          <div class="stat-value">0%</div>
+          <div class="stat-label">Platzhalter</div>
+        </div>
+        <div class="card">
+          <div class="stat-icon gold">⌁</div>
+          <div class="stat-label">Sammlung</div>
+          <div class="stat-value">0</div>
+          <div class="stat-label">Gegenstände erfasst</div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div class="card">
+          <div class="section-head">
+            <h2>Job-Fortschritt</h2>
+            <span class="tag">Beispiel</span>
+          </div>
+          <div id="job-list"></div>
+          <button class="action" data-goto="jobs">Alle Jobs ansehen →</button>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <h2>Deine nächsten Ziele</h2>
+            <span class="tag" id="goal-progress">0% erledigt</span>
+          </div>
+          <div id="goal-list"></div>
+          <div style="margin-top:18px">
+            <button class="action" data-goto="goals">Alle Ziele ansehen →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="notice">
+        ✦ Prototyp: Deine Checklisten werden in diesem Browser gespeichert.
+        Login, echte Online-Speicherung und persönliche Benutzerkonten richten wir im nächsten Schritt ein.
+      </div>
+    </section>
+
+    <section class="page" id="jobs">
+      <div class="welcome">
+        <div class="eyebrow">CHARACTER DEVELOPMENT</div>
+        <h1>Jobs & Level</h1>
+        <p>Behalte den Level-Fortschritt deiner Jobs im Blick.</p>
+      </div>
+      <div class="card">
+        <div class="section-head"><h2>Deine Jobs</h2><span class="tag">Demo-Daten</span></div>
+        <div id="all-jobs"></div>
+      </div>
+    </section>
+
+    <section class="page" id="equipment">
+      <div class="welcome">
+        <div class="eyebrow">GEAR COLLECTION</div>
+        <h1>Ausrüstung</h1>
+        <p>Hier entsteht deine persönliche Ausrüstungsübersicht.</p>
+      </div>
+      <div class="card">
+        <h2>Ausrüstungs-Slots</h2>
+        <div id="gear-list"></div>
+      </div>
+    </section>
+
+    <section class="page" id="goals">
+      <div class="welcome">
+        <div class="eyebrow">YOUR ADVENTURE</div>
+        <h1>Ziele & Erfolge</h1>
+        <p>Markiere deine erreichten Meilensteine.</p>
+      </div>
+      <div class="card">
+        <div class="section-head"><h2>Persönliche Checkliste</h2><span class="tag">Interaktiv</span></div>
+        <div id="all-goals"></div>
+      </div>
+    </section>
+
+    <section class="page" id="collection">
+      <div class="welcome">
+        <div class="eyebrow">TREASURES OF VANA'DIEL</div>
+        <h1>Sammlung</h1>
+        <p>Monster, seltene Drops, Materialien und Erfolge.</p>
+      </div>
+      <div class="card">
+        <h2>Sammlung</h2>
+        <div class="empty">Dieser Bereich wird im nächsten Ausbauschritt eingerichtet.</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const jobs = [
+  { name: "Paladin", code: "PLD", level: 75, icon: "🛡" },
+  { name: "Krieger", code: "WAR", level: 42, icon: "⚔" },
+  { name: "Weißmagier", code: "WHM", level: 37, icon: "✧" },
+  { name: "Dieb", code: "THF", level: 25, icon: "🗡" }
+];
+
+const goals = [
+  { id: "g1", name: "Hauptjob weiterentwickeln", detail: "Job-Level · Paladin" },
+  { id: "g2", name: "Ausrüstungsset vervollständigen", detail: "Ausrüstung · Endgame" },
+  { id: "g3", name: "Neue Mission abschließen", detail: "Missionen · Story" },
+  { id: "g4", name: "Seltenen Gegenstand erhalten", detail: "Sammlung · Drops" },
+  { id: "g5", name: "Ein neues Gebiet erkunden", detail: "Erkundung · Vana'diel" }
+];
+
+const gearSlots = [
+  "Hauptwaffe", "Nebenwaffe", "Fernwaffe", "Kopf",
+  "Körper", "Hände", "Beine", "Füße", "Hals", "Ohrringe",
+  "Ringe", "Rücken", "Taille"
+];
+
+let completed = JSON.parse(localStorage.getItem("ffxi_demo_goals") || "[]");
+
+function renderJobs(target) {
+  document.getElementById(target).innerHTML = jobs.map(job => `
+    <div class="job">
+      <div class="job-top">
+        <div class="job-name">
+          <div class="job-icon">${job.icon}</div>
+          <div><h3>${job.name}</h3><div class="job-meta">${job.code}</div></div>
+        </div>
+        <strong>${job.level} / 99</strong>
+      </div>
+      <div class="track"><div class="fill" style="width:${job.level / 99 * 100}%"></div></div>
+    </div>
+  `).join("");
+}
+
+function renderGoals(target) {
+  document.getElementById(target).innerHTML = goals.map(goal => `
+    <div class="goal ${completed.includes(goal.id) ? "done" : ""}">
+      <input type="checkbox" id="${target}-${goal.id}" data-goal="${goal.id}"
+        ${completed.includes(goal.id) ? "checked" : ""}>
+      <label for="${target}-${goal.id}">
+        <span>${goal.name}</span><small>${goal.detail}</small>
+      </label>
+    </div>
+  `).join("");
+}
+
+function refresh() {
+  renderJobs("job-list");
+  renderJobs("all-jobs");
+  renderGoals("goal-list");
+  renderGoals("all-goals");
+
+  const count = completed.length;
+  document.getElementById("goal-count").textContent = `${count} / ${goals.length}`;
+  document.getElementById("goal-progress").textContent =
+    `${Math.round(count / goals.length * 100)}% erledigt`;
+
+  document.querySelectorAll("[data-goal]").forEach(input => {
+    input.addEventListener("change", () => {
+      const id = input.dataset.goal;
+      completed = input.checked
+        ? [...new Set([...completed, id])]
+        : completed.filter(item => item !== id);
+      localStorage.setItem("ffxi_demo_goals", JSON.stringify(completed));
+      refresh();
+    });
+  });
+}
+
+document.querySelectorAll("[data-page]").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
+document.querySelectorAll("[data-goto]").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.goto));
+});
+
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.toggle("active", page.id === id);
+  });
+  document.querySelectorAll("[data-page]").forEach(button => {
+    button.classList.toggle("active", button.dataset.page === id);
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+document.getElementById("gear-list").innerHTML = gearSlots.map(slot => `
+  <div class="goal">
+    <span class="accent">◇</span>
+    <div><span>${slot}</span><small>Noch kein Gegenstand eingetragen</small></div>
+  </div>
+`).join("");
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (confirm("Alle Demo-Checklisten zurücksetzen?")) {
+    completed = [];
+    localStorage.removeItem("ffxi_demo_goals");
+    refresh();
+  }
+});
+
+refresh();
+</script>
+</body>
+</html>
