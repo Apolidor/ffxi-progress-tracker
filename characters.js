@@ -804,6 +804,7 @@ function renderDashboardJobSummary() {
     : `<div class="empty">
         Set your job levels in Jobs &amp; Level to see progress here.
       </div>`;
+}
 
 const EQUIPMENT_SETS = [
   { id: "af", name: "Artifact Armor (AF)", max: 4 },
