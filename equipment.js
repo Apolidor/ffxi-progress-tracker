@@ -97,6 +97,12 @@ function renderEquipment() {
                   set.id,
                   slot.id
                 );
+                const iconId = getEquipmentIconId(
+                  selectedEquipmentJob,
+                  set.id,
+                  slot.id,
+                  stageId
+                );
 
                 return `
                   <button type="button"
@@ -106,13 +112,13 @@ function renderEquipment() {
                     title="Click to advance equipment progress">
 
                     <span class="equipment-piece-icon">
-                      ${getEquipmentIconId(selectedEquipmentJob, set.id, slot.id)
+                      ${iconId
                         ? `<img
-                            src="https://static.ffxiah.com/images/icon/${getEquipmentIconId(selectedEquipmentJob, set.id, slot.id)}.png"
+                            src="https://static.ffxiah.com/images/icon/${iconId}.png"
                             alt=""
                             loading="lazy"
                             onerror="this.style.display='none'">`
-                        : slot.icon}
+                        : stageId === "none" ? slot.icon : "✓"}
                     </span>
 
                     <span class="equipment-piece-info">
