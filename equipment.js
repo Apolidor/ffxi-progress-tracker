@@ -106,7 +106,13 @@ function renderEquipment() {
                     title="Click to advance equipment progress">
 
                     <span class="equipment-piece-icon">
-                      ${stageId === "none" ? slot.icon : "✓"}
+                      ${getEquipmentIconId(selectedEquipmentJob, set.id, slot.id)
+                        ? `<img
+                            src="https://static.ffxiah.com/images/icon/${getEquipmentIconId(selectedEquipmentJob, set.id, slot.id)}.png"
+                            alt=""
+                            loading="lazy"
+                            onerror="this.style.display='none'">`
+                        : slot.icon}
                     </span>
 
                     <span class="equipment-piece-info">
@@ -298,6 +304,12 @@ function injectEquipmentStyles() {
       margin-top:14px;
       color:var(--accent);
       font-size:12px;
+    }
+
+    .equipment-piece-icon img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
     }
   `;
 
