@@ -182,7 +182,6 @@ function renderEquipment() {
 
                     <span class="equipment-piece-info">
                       <strong>${getEquipmentDisplayName(itemName, stageId)}</strong>
-                      "_comment": ${getEquipmentStatsHtml(itemName, stageId)}
                     </span>
 
                     <span class="equipment-piece-next">›</span>
