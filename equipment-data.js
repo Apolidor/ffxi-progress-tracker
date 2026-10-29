@@ -29,7 +29,7 @@ const EQUIPMENT_ITEMS = {
         name: "Pummeler's Mask",
         iconId: 27663,
         iconIds: {
-          "119": 27663,
+          "109": 27663,
           "119+1": 27684,
           "119+2": 23040,
           "119+3": 23375,
