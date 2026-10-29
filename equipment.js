@@ -29,10 +29,10 @@ function getEquipmentStatsHtml(itemName, stageId) {
   if (!equipmentStatsCache || stageId === "none") return "";
 
   const suffix = {
-    "119+1": " +1",
-    "119+2": " +2",
-    "119+3": " +3",
-    "119+4": " +4"
+    "119": " +1",
+    "119": " +2",
+    "119": " +3",
+    "119": " +4"
   }[stageId] || "";
 
   const row = equipmentStatsCache.find(item =>
@@ -176,7 +176,7 @@ function renderEquipment() {
                     <span class="equipment-piece-info">
                       <strong>
                         ${itemName}${stageId.startsWith("119+") ? " +" + stageId.split("+")[1] : ""}
-                        <small>${stage?.label || "Not obtained"}</small>
+                        <small>(${stage?.label || "Not obtained"})</small>
                       </strong>
                       ${getEquipmentStatsHtml(itemName, stageId)}
                     </span>
