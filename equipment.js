@@ -91,6 +91,14 @@ function normalizeEquipmentProgress(saved) {
   return result;
 }
 
+function getEquipmentDisplayName(itemName, stageId) {
+  if (stageId === "none") {return `<strong>${itemName}</strong> <small>(not obtained)</small>`;}
+  if (stageId === "109") {return `<strong>${itemName}</strong> <small>(109)</small>`;}
+  if (stageId === "119") {return `<strong>${itemName}</strong> <small>(119)</small>`;}
+  if (stageId.startsWith("119+")) {return `<strong>${itemName} +${stageId.split("+")[1]}</strong> <small>(119)</small>`;}
+  return `<strong>${itemName}</strong>`;
+}
+
 function renderEquipment() {
   const container = document.getElementById("gear-list");
 
@@ -174,10 +182,7 @@ function renderEquipment() {
                     </span>
 
                     <span class="equipment-piece-info">
-                      <strong>
-                        ${itemName}${stageId.startsWith("119+") ? "119":""}
-                        <small>(${stage?.label || "Not obtained"})</small>
-                      </strong>
+                      <strong>${getEquipmentDisplayName(itemName, stageId)}</strong>
                       ${getEquipmentStatsHtml(itemName, stageId)}
                     </span>
 
