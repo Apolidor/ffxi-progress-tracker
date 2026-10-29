@@ -2,34 +2,53 @@
 let selectedEquipmentJob = "WAR";
 let equipmentSaveTimer = null;
 
-const ffxiahStatsCache = new Map();
+let equipmentStatsCache = null;
+let equipmentStatsLoading = false;
 
-async function fetchFfxiahItemStats(itemId) {
-  if (!itemId) return null;
-  if (ffxiahStatsCache.has(itemId)) {
-    return ffxiahStatsCache.get(itemId);
+async function loadEquipmentStats() {
+  if (equipmentStatsCache !== null || equipmentStatsLoading) return;
+
+  equipmentStatsLoading = true;
+
+  const { data, error } = await db
+    .from("equipment_stats")
+    .select("item_name, stage, stats");
+
+  equipmentStatsLoading = false;
+
+  if (error) {
+    console.error("Equipment-Stats konnten nicht geladen werden:", error);
+    return;
   }
 
-  const request = fetch(`https://www.ffxiah.com/item/${itemId}`)
-    .then(async response => {
-      if (!response.ok) throw new Error("FFXIAH nicht erreichbar");
+  equipmentStatsCache = data || [];
+  renderEquipment();
+}
 
-      const html = await response.text();
-      const doc = new DOMParser().parseFromString(html, "text/html");
-      const text = doc.body.innerText;
-      const match = text.match(
-        /DEF:\s*[\s\S]*?(?=LV\s+\d+|$)/
-      );
+function getEquipmentStatsHtml(itemName, stageId) {
+  if (!equipmentStatsCache || stageId === "none") return "";
 
-      return match ? match[0].trim() : null;
-    })
-    .catch(error => {
-      console.warn("FFXIAH-Stats konnten nicht geladen werden:", error);
-      return null;
-    });
+  const suffix = {
+    "119+1": " +1",
+    "119+2": " +2",
+    "119+3": " +3",
+    "119+4": " +4"
+  }[stageId] || "";
 
-  ffxiahStatsCache.set(itemId, request);
-  return request;
+  const row = equipmentStatsCache.find(item =>
+    item.item_name === itemName + suffix &&
+    item.stage === stageId
+  );
+
+  if (!row || !row.stats) return "";
+
+  const stats = Object.entries(row.stats)
+    .map(([name, value]) =>
+      `<span class="equipment-stat"><b>${name}:</b> ${value}</span>`
+    )
+    .join("");
+
+  return `<div class="equipment-stats">${stats}</div>`;
 }
 
 function defaultEquipmentProgress() {
@@ -76,6 +95,9 @@ function renderEquipment() {
   const container = document.getElementById("gear-list");
 
   if (!container || !activeCharacter) return;
+  if (equipmentStatsCache === null && !equipmentStatsLoading) {
+  loadEquipmentStats();
+}
 
   injectEquipmentStyles();
 
@@ -154,6 +176,7 @@ function renderEquipment() {
                     <span class="equipment-piece-info">
                       <strong>${itemName}</strong>
                       <small>${stage?.label || "Not obtained"}</small>
+                      ${getEquipmentStatsHtml(itemName, stageId)}
                     </span>
 
                     <span class="equipment-piece-next">›</span>
@@ -346,6 +369,19 @@ function injectEquipmentStyles() {
       width: 32px;
       height: 32px;
       object-fit: contain;
+    }
+
+    .equipment-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    
+    .equipment-stat {
+      white-space: nowrap;
     }
   `;
 
