@@ -175,7 +175,7 @@ function renderEquipment() {
 
                     <span class="equipment-piece-info">
                       <strong>
-                        ${itemName}${stageId.startsWith("119+") ? "119"}
+                        ${itemName}${stageId.startsWith("119+") ? "119":""}
                         <small>(${stage?.label || "Not obtained"})</small>
                       </strong>
                       ${getEquipmentStatsHtml(itemName, stageId)}
