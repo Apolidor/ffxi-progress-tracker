@@ -15,7 +15,6 @@ const EQUIPMENT_SLOTS = [
 
 const EQUIPMENT_STAGES = [
   { id: "none", label: "Not obtained" },
-  { id: "base", label: "Base version" },
   { id: "109", label: "Item Level 109" },
   { id: "119", label: "Item Level 119" },
   { id: "119+1", label: "Item Level 119 +1" },
