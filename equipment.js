@@ -2,6 +2,36 @@
 let selectedEquipmentJob = "WAR";
 let equipmentSaveTimer = null;
 
+const ffxiahStatsCache = new Map();
+
+async function fetchFfxiahItemStats(itemId) {
+  if (!itemId) return null;
+  if (ffxiahStatsCache.has(itemId)) {
+    return ffxiahStatsCache.get(itemId);
+  }
+
+  const request = fetch(`https://www.ffxiah.com/item/${itemId}`)
+    .then(async response => {
+      if (!response.ok) throw new Error("FFXIAH nicht erreichbar");
+
+      const html = await response.text();
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const text = doc.body.innerText;
+      const match = text.match(
+        /DEF:\s*[\s\S]*?(?=LV\s+\d+|$)/
+      );
+
+      return match ? match[0].trim() : null;
+    })
+    .catch(error => {
+      console.warn("FFXIAH-Stats konnten nicht geladen werden:", error);
+      return null;
+    });
+
+  ffxiahStatsCache.set(itemId, request);
+  return request;
+}
+
 function defaultEquipmentProgress() {
   const result = {};
 
