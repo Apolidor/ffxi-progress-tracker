@@ -140,6 +140,36 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
   .card { padding: 15px; }
   .stat-value { font-size: 24px; }
 }
+  
+.equipment-submenu {
+  display: none;
+  padding-left: 18px;
+  margin-bottom: 8px;
+}
+
+.equipment-submenu.open {
+  display: block;
+}
+
+.equipment-submenu button {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  margin: 2px 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.equipment-submenu button:hover,
+.equipment-submenu button.active {
+  background: #202d3d;
+  color: var(--accent);
+}
+  
 </style>
 </head>
 <body>
@@ -157,7 +187,10 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
     <div class="nav-list">
       <button class="nav active" data-page="dashboard">◈ Übersicht</button>
       <button class="nav" data-page="jobs">⚔ Jobs & Level</button>
-      <button class="nav" data-page="equipment">◇ Ausrüstung</button>
+      <button class="nav" id="equipment-menu-toggle" data-page="equipment">
+        ◇ Ausrüstung <span id="equipment-menu-arrow">▾</span>
+      </button>
+      <div id="equipment-submenu" class="equipment-submenu"></div>
       <button class="nav" data-page="goals">☑ Ziele & Erfolge</button>
       <button class="nav" data-page="collection">✧ Sammlung</button>
     </div>
