@@ -2,53 +2,79 @@
 let selectedEquipmentJob = "WAR";
 let equipmentSaveTimer = null;
 
-let equipmentStatsCache = null;
-let equipmentStatsLoading = false;
+let equipmentItemsCache = null;
+let equipmentItemsLoading = false;
 
-async function loadEquipmentStats() {
-  if (equipmentStatsCache !== null || equipmentStatsLoading) return;
+async function loadEquipmentItems() {
+  if (equipmentItemsCache !== null || equipmentItemsLoading) return;
 
-  equipmentStatsLoading = true;
+  equipmentItemsLoading = true;
 
   const { data, error } = await db
-    .from("equipment_stats")
-    .select("item_name, stage, stats");
+    .from("equipment")
+    .select("item_id, name, itemslot, item_level, jobs, set");
 
-  equipmentStatsLoading = false;
+  equipmentItemsLoading = false;
 
   if (error) {
-    console.error("Equipment-Stats konnten nicht geladen werden:", error);
+    console.error("Equipment konnten nicht geladen werden:", error);
     return;
   }
 
-  equipmentStatsCache = data || [];
+  equipmentItemsCache = data || [];
   renderEquipment();
 }
 
-function getEquipmentStatsHtml(itemName, stageId) {
-  if (!equipmentStatsCache || stageId === "none") return "";
+function normalizeEquipmentSet(value) {
+  const set = String(value || "").toLowerCase();
 
-  const suffix = {
-    "119+1": " +1",
-    "119+2": " +2",
-    "119+3": " +3",
-    "119+4": " +4"
-  }[stageId] || "";
+  if (set.includes("artifact") || set === "af") return "af";
+  if (set.includes("relic")) return "relic";
+  if (set.includes("empyrean")) return "empyrean";
 
-  const row = equipmentStatsCache.find(item =>
-    item.item_name === itemName + suffix &&
-    item.stage === stageId
+  return null;
+}
+
+function getEquipmentStage(item) {
+  if (Number(item.item_level) === 109) return "109";
+
+  const match = item.name.match(/\+([1-4])$/);
+  if (match && Number(item.item_level) === 119) {
+    return `119+${match[1]}`;
+  }
+
+  return null;
+}
+
+function getEquipmentBaseName(name) {
+  return name.replace(/\s\+\d+$/, "");
+}
+
+function getDatabaseEquipment(job, setId, slotId) {
+  if (!equipmentItemsCache) return [];
+
+  return equipmentItemsCache.filter(item =>
+    Array.isArray(item.jobs) &&
+    item.jobs.includes(job) &&
+    normalizeEquipmentSet(item.set) === setId &&
+    String(item.itemslot).toLowerCase() === slotId
   );
+}
 
-  if (!row || !row.stats) return "";
+function getDatabaseEquipmentItem(job, setId, slotId, stageId) {
+  const items = getDatabaseEquipment(job, setId, slotId);
 
-  const stats = Object.entries(row.stats)
-    .map(([name, value]) =>
-      `<span class="equipment-stat"><b>${name}:</b> ${value}</span>`
-    )
-    .join("");
+  return items.find(item => getEquipmentStage(item) === stageId) || null;
+}
 
-  return `<div class="equipment-stats">${stats}</div>`;
+function getDatabaseEquipmentName(job, setId, slotId) {
+  const items = getDatabaseEquipment(job, setId, slotId);
+
+  if (!items.length) {
+    return EQUIPMENT_SLOTS.find(slot => slot.id === slotId)?.name || slotId;
+  }
+
+  return getEquipmentBaseName(items[0].name);
 }
 
 function defaultEquipmentProgress() {
@@ -102,9 +128,11 @@ function renderEquipment() {
   const container = document.getElementById("gear-list");
 
   if (!container || !activeCharacter) return;
-  if (equipmentStatsCache === null && !equipmentStatsLoading) {
-  loadEquipmentStats();
-}
+  if (equipmentItemsCache === null) {
+    loadEquipmentItems();
+    container.innerHTML = "<p>Equipment wird geladen ...</p>";
+    return;
+  }
 
   injectEquipmentStyles();
 
@@ -151,17 +179,22 @@ function renderEquipment() {
                 const stage = EQUIPMENT_STAGES.find(
                   item => item.id === stageId
                 );
-                const itemName = getEquipmentItemName(
+                const itemName = getDatabaseEquipmentName(
                   selectedEquipmentJob,
                   set.id,
                   slot.id
                 );
-                const iconId = getEquipmentIconId(
-                  selectedEquipmentJob,
-                  set.id,
-                  slot.id,
-                  stageId
-                );
+                
+                const databaseItem = stageId === "none"
+                  ? null
+                  : getDatabaseEquipmentItem(
+                      selectedEquipmentJob,
+                      set.id,
+                      slot.id,
+                      stageId
+                    );
+                
+                const iconId = databaseItem?.item_id || null;
 
                 return `
                   <button type="button"
