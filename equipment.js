@@ -1,5 +1,6 @@
 
 let selectedEquipmentJob = "WAR";
+let selectedEquipmentOrigin = null;
 let equipmentSaveTimer = null;
 
 let equipmentItemsCache = null;
@@ -18,10 +19,16 @@ async function loadEquipmentItems() {
 
   if (error) {
     console.error("Equipment konnten nicht geladen werden:", error);
+    const container = document.getElementById("gear-list");
+    if (container) {
+      container.innerHTML = `<p>Fehler beim Laden: ${error.message}</p>`;
+    }
     return;
   }
 
   equipmentItemsCache = data || [];
+
+  populateEquipmentSubmenu();
   renderEquipment();
 }
 
@@ -39,9 +46,12 @@ function getEquipmentStage(item) {
   if (Number(item.item_level) === 109) return "109";
 
   const match = item.name.match(/\+([1-4])$/);
+
   if (match && Number(item.item_level) === 119) {
     return `119+${match[1]}`;
   }
+
+  if (Number(item.item_level) === 119) return "119";
 
   return null;
 }
@@ -50,31 +60,71 @@ function getEquipmentBaseName(name) {
   return name.replace(/\s\+\d+$/, "");
 }
 
-function getDatabaseEquipment(job, setId, slotId) {
+function getEquipmentOrigins() {
   if (!equipmentItemsCache) return [];
 
-  return equipmentItemsCache.filter(item =>
-    Array.isArray(item.jobs) &&
-    item.jobs.includes(job) &&
-    normalizeEquipmentSet(item.set) === setId &&
-    String(item.itemslot).toLowerCase() === slotId
-  );
+  return [...new Set(
+    equipmentItemsCache
+      .map(item => String(item.set || "").trim())
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b));
 }
 
-function getDatabaseEquipmentItem(job, setId, slotId, stageId) {
-  const items = getDatabaseEquipment(job, setId, slotId);
+function populateEquipmentSubmenu() {
+  const submenu = document.getElementById("equipment-submenu");
+  if (!submenu) return;
 
-  return items.find(item => getEquipmentStage(item) === stageId) || null;
-}
+  const origins = getEquipmentOrigins();
 
-function getDatabaseEquipmentName(job, setId, slotId) {
-  const items = getDatabaseEquipment(job, setId, slotId);
+  submenu.innerHTML = origins.map(origin => `
+    <button type="button"
+      data-equipment-origin="${origin.replace(/"/g, "&quot;")}"
+      class="${origin === selectedEquipmentOrigin ? "active" : ""}">
+      ${origin}
+    </button>
+  `).join("");
 
-  if (!items.length) {
-    return EQUIPMENT_SLOTS.find(slot => slot.id === slotId)?.name || slotId;
+  submenu.querySelectorAll("[data-equipment-origin]")
+    .forEach(button => {
+      button.addEventListener("click", () => {
+        selectedEquipmentOrigin = button.dataset.equipmentOrigin;
+
+        submenu.classList.add("open");
+        populateEquipmentSubmenu();
+
+        showPage("equipment");
+        renderEquipment();
+      });
+    });
+
+  if (!selectedEquipmentOrigin && origins.length) {
+    selectedEquipmentOrigin = origins[0];
   }
+}
 
-  return getEquipmentBaseName(items[0].name);
+function initEquipmentNavigation() {
+  const toggle = document.getElementById("equipment-menu-toggle");
+  const submenu = document.getElementById("equipment-submenu");
+  const arrow = document.getElementById("equipment-menu-arrow");
+
+  if (!toggle || !submenu || toggle.dataset.initialized) return;
+
+  toggle.dataset.initialized = "true";
+
+  toggle.addEventListener("click", () => {
+    submenu.classList.toggle("open");
+
+    if (arrow) {
+      arrow.textContent = submenu.classList.contains("open") ? "▴" : "▾";
+    }
+
+    if (equipmentItemsCache === null) {
+      loadEquipmentItems();
+    } else {
+      populateEquipmentSubmenu();
+      renderEquipment();
+    }
+  });
 }
 
 function defaultEquipmentProgress() {
@@ -115,7 +165,11 @@ function normalizeEquipmentProgress(saved) {
       }
 
       Object.entries(pieces).forEach(([itemId, value]) => {
-        if (EQUIPMENT_STAGES.some(stage => stage.id === value)) {
+        if (
+          EQUIPMENT_STAGES.some(stage => stage.id === value) ||
+          value === "none" ||
+          /^\d+$/.test(String(value))
+        ) {
           result[job.code][setId][itemId] = value;
         }
       });
@@ -125,20 +179,104 @@ function normalizeEquipmentProgress(saved) {
   return result;
 }
 
-function getEquipmentDisplayName(itemName, stageId) {
-  if (stageId === "none") {return `<strong>${itemName}</strong> <small>(not obtained)</small>`;}
-  if (stageId === "109") {return `<strong>${itemName}</strong> <small>(109)</small>`;}
-  if (stageId.startsWith("119+")) {return `<strong>${itemName} +${stageId.split("+")[1]}</strong> <small>(119)</small>`;}
-  return `<strong>${itemName}</strong>`;
+function getEquipmentGroups(job, origin) {
+  if (!equipmentItemsCache) return [];
+
+  const items = equipmentItemsCache.filter(item =>
+    Array.isArray(item.jobs) &&
+    item.jobs.includes(job) &&
+    String(item.set || "").trim() === origin
+  );
+
+  const groups = {};
+
+  items.forEach(item => {
+    const slotId = String(item.itemslot || "").toLowerCase();
+    const baseName = getEquipmentBaseName(item.name);
+    const key = `${slotId}::${baseName}`;
+
+    if (!groups[key]) {
+      groups[key] = {
+        key,
+        slotId,
+        baseName,
+        items: []
+      };
+    }
+
+    groups[key].items.push(item);
+  });
+
+  return Object.values(groups).map(group => {
+    group.items.sort((a, b) => {
+      const stageOrder = item => {
+        const stage = getEquipmentStage(item);
+
+        if (stage === "109") return 0;
+        if (stage === "119") return 1;
+        if (stage && stage.startsWith("119+")) {
+          return 1 + Number(stage.split("+")[1]);
+        }
+
+        return 10;
+      };
+
+      return stageOrder(a) - stageOrder(b);
+    });
+
+    return group;
+  }).sort((a, b) => {
+    const slotA = EQUIPMENT_SLOTS.findIndex(slot => slot.id === a.slotId);
+    const slotB = EQUIPMENT_SLOTS.findIndex(slot => slot.id === b.slotId);
+
+    if (slotA !== slotB) return slotA - slotB;
+
+    return a.baseName.localeCompare(b.baseName);
+  });
+}
+
+function getEquipmentProgressValue(job, origin, group) {
+  const jobProgress = activeCharacter.equipment[job];
+
+  if (!jobProgress[origin]) {
+    jobProgress[origin] = {};
+  }
+
+  // Neue Speicherung: Fortschritt pro Ausrüstungsreihe.
+  if (jobProgress[origin][group.key] !== undefined) {
+    return String(jobProgress[origin][group.key]);
+  }
+
+  // Alte Speicherung übernehmen: AF, Relic und Empyrean.
+  const oldSet = normalizeEquipmentSet(origin);
+
+  if (oldSet && jobProgress[oldSet]) {
+    const oldStage = jobProgress[oldSet][group.slotId];
+
+    if (oldStage && oldStage !== "none") {
+      const matchingItem = group.items.find(
+        item => getEquipmentStage(item) === oldStage
+      );
+
+      if (matchingItem) {
+        jobProgress[origin][group.key] = String(matchingItem.item_id);
+        return String(matchingItem.item_id);
+      }
+    }
+  }
+
+  jobProgress[origin][group.key] = "none";
+  return "none";
 }
 
 function renderEquipment() {
   const container = document.getElementById("gear-list");
 
   if (!container || !activeCharacter) return;
+
   if (equipmentItemsCache === null) {
-    loadEquipmentItems();
     container.innerHTML = "<p>Equipment wird geladen ...</p>";
+    loadEquipmentItems();
     return;
   }
 
@@ -148,7 +286,39 @@ function renderEquipment() {
     activeCharacter.equipment
   );
 
+  if (!selectedEquipmentOrigin) {
+    const origins = getEquipmentOrigins();
+    selectedEquipmentOrigin = origins[0] || null;
+  }
+
+  if (!selectedEquipmentOrigin) {
+    container.innerHTML = "<p>Keine Ausrüstung in Supabase gefunden.</p>";
+    return;
+  }
+
+  const groups = getEquipmentGroups(
+    selectedEquipmentJob,
+    selectedEquipmentOrigin
+  );
+
+  const title = document.querySelector("#equipment h1");
+  if (title) title.textContent = selectedEquipmentOrigin;
+
+  const description = document.querySelector("#equipment .welcome p");
+  if (description) {
+    description.textContent =
+      `Ausrüstungsfortschritt für ${selectedEquipmentOrigin}`;
+  }
+
   const progress = activeCharacter.equipment[selectedEquipmentJob];
+
+  const obtained = groups.filter(group =>
+    getEquipmentProgressValue(
+      selectedEquipmentJob,
+      selectedEquipmentOrigin,
+      group
+    ) !== "none"
+  ).length;
 
   container.innerHTML = `
     <div style="margin-bottom:20px">
@@ -167,78 +337,67 @@ function renderEquipment() {
     </div>
 
     <div class="equipment-set-grid">
-      ${EQUIPMENT_SETS.map(set => {
-        const pieces = EQUIPMENT_SLOTS.map(
-          slot => progress[set.id][slot.id]
-        );
+      <div class="equipment-set-card">
+        <div class="equipment-set-heading">
+          <h3>${selectedEquipmentOrigin}</h3>
+          <span class="tag">${obtained}/${groups.length}</span>
+        </div>
 
-        const obtained = pieces.filter(value => value !== "none").length;
+        <div class="equipment-piece-list">
+          ${groups.map(group => {
+            const currentValue = getEquipmentProgressValue(
+              selectedEquipmentJob,
+              selectedEquipmentOrigin,
+              group
+            );
 
-        return `
-          <div class="equipment-set-card">
-            <div class="equipment-set-heading">
-              <h3>${set.name}</h3>
-              <span class="tag">${obtained}/5</span>
-            </div>
+            const currentItem = group.items.find(
+              item => String(item.item_id) === currentValue
+            );
 
-            <div class="equipment-piece-list">
-              ${EQUIPMENT_SLOTS.map(slot => {
-                const stageId = progress[set.id][slot.id];
-                const stage = EQUIPMENT_STAGES.find(
-                  item => item.id === stageId
-                );
-                const itemName = getDatabaseEquipmentName(
-                  selectedEquipmentJob,
-                  set.id,
-                  slot.id
-                );
-                
-                const databaseItem = stageId === "none"
-                  ? null
-                  : getDatabaseEquipmentItem(
-                      selectedEquipmentJob,
-                      set.id,
-                      slot.id,
-                      stageId
-                    );
-                
-                const iconId = databaseItem?.item_id || null;
+            const iconItem = currentItem || group.items[0];
 
-                return `
-                  <button type="button"
-                    class="equipment-piece-button"
-                    data-equipment-set="${set.id}"
-                    data-equipment-slot="${slot.id}"
-                    title="Click to advance equipment progress">
+            const slot = EQUIPMENT_SLOTS.find(
+              item => item.id === group.slotId
+            );
 
-                    <span class="equipment-piece-icon">
-                      ${iconId
-                        ? `<img
-                            src="https://static.ffxiah.com/images/icon/${iconId}.png"
-                            alt=""
-                            loading="lazy"
-                            onerror="this.style.display='none'">`
-                        : stageId === "none" ? slot.icon : "✓"}
-                    </span>
+            return `
+              <button type="button"
+                class="equipment-piece-button"
+                data-equipment-key="${group.key.replace(/"/g, "&quot;")}"
+                title="Click to advance equipment progress">
 
-                    <span class="equipment-piece-info">
-                      <strong>${getEquipmentDisplayName(itemName, stageId)}</strong>
-                    </span>
+                <span class="equipment-piece-icon">
+                  ${iconItem?.item_id
+                    ? `<img
+                        src="https://static.ffxiah.com/images/icon/${iconItem.item_id}.png"
+                        alt=""
+                        loading="lazy"
+                        onerror="this.style.display='none'">`
+                    : slot?.icon || "◇"}
+                </span>
 
-                    <span class="equipment-piece-next">›</span>
-                  </button>
-                `;
-              }).join("")}
-            </div>
+                <span class="equipment-piece-info">
+                  <strong>
+                    ${currentItem
+                      ? currentItem.name
+                      : group.baseName + " (not obtained)"}
+                  </strong>
+                  <small>${slot?.name || group.slotId}</small>
+                </span>
 
-            <div class="equipment-completion">
-              ${obtained === 5
-                ? "✓ Set collected"
-                : `${5 - obtained} pieces remaining`}
-            </div>
-          </div>
-        `;
-      }).join("")}
+                <span class="equipment-piece-next">›</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+
+        <div class="equipment-completion">
+          ${obtained === groups.length
+            ? "✓ All items collected"
+            : `${groups.length - obtained} items remaining`}
+        </div>
+      </div>
     </div>
 
     <div id="equipment-save-status"
@@ -254,29 +413,28 @@ function renderEquipment() {
   container.querySelectorAll(".equipment-piece-button")
     .forEach(button => {
       button.addEventListener("click", () => {
-        const setId = button.dataset.equipmentSet;
-        const slotId = button.dataset.equipmentSlot;
-
-        const currentId =
-          activeCharacter.equipment[selectedEquipmentJob][setId][slotId];
-
-        const currentIndex = EQUIPMENT_STAGES.findIndex(
-          stage => stage.id === currentId
+        const group = groups.find(
+          item => item.key === button.dataset.equipmentKey
         );
 
-        const maxStageId =
-          setId === "empyrean" ? "119+3" : "119+4";
+        if (!group) return;
 
-        const maxIndex = EQUIPMENT_STAGES.findIndex(
-          stage => stage.id === maxStageId
+        const currentValue = getEquipmentProgressValue(
+          selectedEquipmentJob,
+          selectedEquipmentOrigin,
+          group
         );
 
-        const nextIndex = currentIndex >= maxIndex
-          ? 0
-          : currentIndex + 1;
+        const options = [
+          "none",
+          ...group.items.map(item => String(item.item_id))
+        ];
 
-        activeCharacter.equipment[selectedEquipmentJob][setId][slotId] =
-          EQUIPMENT_STAGES[nextIndex].id;
+        const currentIndex = options.indexOf(currentValue);
+        const nextIndex = (currentIndex + 1) % options.length;
+
+        activeCharacter.equipment[selectedEquipmentJob]
+          [selectedEquipmentOrigin][group.key] = options[nextIndex];
 
         renderEquipment();
         saveEquipmentSoon();
@@ -297,6 +455,7 @@ async function saveCharacterEquipment() {
   if (!activeCharacter || !currentUser) return;
 
   const characterId = activeCharacter.id;
+
   const equipmentToSave = normalizeEquipmentProgress(
     activeCharacter.equipment
   );
@@ -325,6 +484,8 @@ async function saveCharacterEquipment() {
     status.textContent = "✓ Saved online";
   }
 }
+
+initEquipmentNavigation();
 
 function injectEquipmentStyles() {
   if (document.getElementById("ffxi-equipment-styles")) return;
