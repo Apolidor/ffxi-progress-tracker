@@ -269,9 +269,9 @@ function getEquipmentProgressValue(job, origin, group) {
   return "none";
 }
 
+
 function renderEquipment() {
   const container = document.getElementById("gear-list");
-
   if (!container || !activeCharacter) return;
 
   if (equipmentItemsCache === null) {
@@ -287,116 +287,107 @@ function renderEquipment() {
   );
 
   if (!selectedEquipmentOrigin) {
-    const origins = getEquipmentOrigins();
-    selectedEquipmentOrigin = origins[0] || null;
+    selectedEquipmentOrigin = getEquipmentOrigins()[0] || null;
   }
 
   if (!selectedEquipmentOrigin) {
-    container.innerHTML = "<p>Keine Ausrüstung in Supabase gefunden.</p>";
+    container.innerHTML = "<p>Keine Ausrüstung gefunden.</p>";
     return;
   }
 
-  const groups = getEquipmentGroups(
-    selectedEquipmentJob,
-    selectedEquipmentOrigin
-  );
+  const slots = [
+    { id: "head", name: "Head" },
+    { id: "body", name: "Body" },
+    { id: "hands", name: "Hands" },
+    { id: "legs", name: "Legs" },
+    { id: "feet", name: "Feet" }
+  ];
+
+  const jobs = FFXI_JOBS.map(job => ({
+    ...job,
+    groups: getEquipmentGroups(job.code, selectedEquipmentOrigin)
+  }));
+
+  const availableJobs = jobs.filter(job => job.groups.length > 0);
 
   const title = document.querySelector("#equipment h1");
   if (title) title.textContent = selectedEquipmentOrigin;
 
-  const description = document.querySelector("#equipment .welcome p");
-  if (description) {
-    description.textContent =
-      `Ausrüstungsfortschritt für ${selectedEquipmentOrigin}`;
-  }
-
-  const progress = activeCharacter.equipment[selectedEquipmentJob];
-
-  const obtained = groups.filter(group =>
-    getEquipmentProgressValue(
-      selectedEquipmentJob,
-      selectedEquipmentOrigin,
-      group
-    ) !== "none"
-  ).length;
-
   container.innerHTML = `
-    <div style="margin-bottom:20px">
-      <label for="equipment-job-select">Select job</label>
-      <select id="equipment-job-select"
-        style="display:block;width:100%;max-width:360px;padding:10px;
-        margin-top:7px;background:var(--bg);color:var(--text);
-        border:1px solid var(--border);border-radius:8px">
-        ${FFXI_JOBS.map(job => `
-          <option value="${job.code}"
-            ${job.code === selectedEquipmentJob ? "selected" : ""}>
-            ${job.code} — ${job.name}
-          </option>
+    <div class="equipment-table-wrapper">
+      <div class="equipment-job-table">
+
+        <div class="equipment-table-header">
+          <div class="equipment-job-heading">Job</div>
+          ${slots.map(slot => `
+            <div>${slot.name}</div>
+          `).join("")}
+        </div>
+
+        ${availableJobs.map(job => `
+          <div class="equipment-job-row">
+
+            <div class="equipment-job-name">
+              <strong>${job.code}</strong>
+              <small>${job.name}</small>
+            </div>
+
+            ${slots.map(slot => {
+              const groups = job.groups.filter(
+                group => group.slotId === slot.id
+              );
+
+              return `
+                <div class="equipment-slot-cell">
+                  ${groups.length
+                    ? groups.map(group => {
+                        const currentValue = getEquipmentProgressValue(
+                          job.code,
+                          selectedEquipmentOrigin,
+                          group
+                        );
+
+                        const currentItem = group.items.find(
+                          item => String(item.item_id) === currentValue
+                        );
+
+                        const iconItem = currentItem || group.items[0];
+
+                        return `
+                          <button type="button"
+                            class="equipment-row-item"
+                            data-job="${job.code}"
+                            data-equipment-key="${group.key.replace(/"/g, "&quot;")}">
+
+                            ${iconItem ? `
+                              <img
+                                src="https://static.ffxiah.com/images/icon/${iconItem.item_id}.png"
+                                alt=""
+                                loading="lazy"
+                                onerror="this.style.display='none'">
+                            ` : ""}
+
+                            <span>
+                              ${currentItem
+                                ? currentItem.name
+                                : group.baseName}
+                            </span>
+
+                            <small>
+                              ${currentItem ? "Obtained" : "Not obtained"}
+                            </small>
+                          </button>
+                        `;
+                      }).join("")
+                    : '<span class="equipment-empty">–</span>'
+                  }
+                </div>
+              `;
+            }).join("")}
+
+          </div>
         `).join("")}
-      </select>
-    </div>
 
-    <div class="equipment-set-grid">
-      <div class="equipment-set-card">
-        <div class="equipment-set-heading">
-          <h3>${selectedEquipmentOrigin}</h3>
-          <span class="tag">${obtained}/${groups.length}</span>
-        </div>
-
-        <div class="equipment-piece-list">
-          ${groups.map(group => {
-            const currentValue = getEquipmentProgressValue(
-              selectedEquipmentJob,
-              selectedEquipmentOrigin,
-              group
-            );
-
-            const currentItem = group.items.find(
-              item => String(item.item_id) === currentValue
-            );
-
-            const iconItem = currentItem || group.items[0];
-
-            const slot = EQUIPMENT_SLOTS.find(
-              item => item.id === group.slotId
-            );
-
-            return `
-              <button type="button"
-                class="equipment-piece-button"
-                data-equipment-key="${group.key.replace(/"/g, "&quot;")}"
-                title="Click to advance equipment progress">
-
-                <span class="equipment-piece-icon">
-                  ${iconItem?.item_id
-                    ? `<img
-                        src="https://static.ffxiah.com/images/icon/${iconItem.item_id}.png"
-                        alt=""
-                        loading="lazy"
-                        onerror="this.style.display='none'">`
-                    : slot?.icon || "◇"}
-                </span>
-
-                <span class="equipment-piece-info">
-                  <strong>
-                    ${currentItem
-                      ? currentItem.name
-                      : group.baseName + " (not obtained)"}
-                  </strong>
-                  <small>${slot?.name || group.slotId}</small>
-                </span>
-
-                <span class="equipment-piece-next">›</span>
-              </button>
-            `;
-          }).join("")}
-        </div>
-
-        <div class="equipment-completion">
-          ${obtained === groups.length
-            ? "✓ All items collected"
-            : `${groups.length - obtained} items remaining`}
-        </div>
       </div>
     </div>
 
@@ -404,23 +395,21 @@ function renderEquipment() {
       class="ffxi-save-status" role="status">Ready</div>
   `;
 
-  document.getElementById("equipment-job-select")
-    .addEventListener("change", event => {
-      selectedEquipmentJob = event.target.value;
-      renderEquipment();
-    });
-
-  container.querySelectorAll(".equipment-piece-button")
+  container.querySelectorAll(".equipment-row-item")
     .forEach(button => {
       button.addEventListener("click", () => {
-        const group = groups.find(
-          item => item.key === button.dataset.equipmentKey
-        );
+        const job = button.dataset.job;
+
+        const group = jobs
+          .find(item => item.code === job)
+          ?.groups.find(
+            item => item.key === button.dataset.equipmentKey
+          );
 
         if (!group) return;
 
         const currentValue = getEquipmentProgressValue(
-          selectedEquipmentJob,
+          job,
           selectedEquipmentOrigin,
           group
         );
@@ -433,7 +422,7 @@ function renderEquipment() {
         const currentIndex = options.indexOf(currentValue);
         const nextIndex = (currentIndex + 1) % options.length;
 
-        activeCharacter.equipment[selectedEquipmentJob]
+        activeCharacter.equipment[job]
           [selectedEquipmentOrigin][group.key] = options[nextIndex];
 
         renderEquipment();
@@ -441,6 +430,7 @@ function renderEquipment() {
       });
     });
 }
+
 
 function saveEquipmentSoon() {
   const status = document.getElementById("equipment-save-status");
@@ -590,6 +580,114 @@ function injectEquipmentStyles() {
     .equipment-stat {
       white-space: nowrap;
     }
+
+    
+    .equipment-table-wrapper {
+      overflow-x: auto;
+      width: 100%;
+    }
+    
+    .equipment-job-table {
+      min-width: 850px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    
+    .equipment-table-header,
+    .equipment-job-row {
+      display: grid;
+      grid-template-columns: 110px repeat(5, minmax(130px, 1fr));
+    }
+    
+    .equipment-table-header {
+      background: var(--panel2);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    .equipment-table-header > div {
+      padding: 14px 8px;
+      border-right: 1px solid var(--border);
+    }
+    
+    .equipment-job-row {
+      border-top: 1px solid var(--border);
+    }
+    
+    .equipment-job-name {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 10px;
+      border-right: 1px solid var(--border);
+    }
+    
+    .equipment-job-name strong {
+      font-size: 15px;
+      color: var(--accent);
+    }
+    
+    .equipment-job-name small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+    
+    .equipment-slot-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      justify-content: center;
+      padding: 6px;
+      border-right: 1px solid var(--border);
+      min-width: 0;
+    }
+    
+    .equipment-row-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 85px;
+      padding: 8px 4px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      text-align: center;
+    }
+    
+    .equipment-row-item:hover {
+      border-color: var(--accent);
+      background: var(--panel2);
+    }
+    
+    .equipment-row-item img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+    
+    .equipment-row-item span {
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+    
+    .equipment-row-item small {
+      color: var(--muted);
+      font-size: 10px;
+    }
+    
+    .equipment-empty {
+      color: var(--muted);
+      text-align: center;
+    }
+
   `;
 
   document.head.appendChild(style);
