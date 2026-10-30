@@ -103,12 +103,20 @@ function normalizeEquipmentProgress(saved) {
   }
 
   FFXI_JOBS.forEach(job => {
-    EQUIPMENT_SETS.forEach(set => {
-      EQUIPMENT_SLOTS.forEach(slot => {
-        const value = saved?.[job.code]?.[set.id]?.[slot.id];
+    const savedJob = saved[job.code];
 
+    if (!savedJob || typeof savedJob !== "object") return;
+
+    Object.entries(savedJob).forEach(([setId, pieces]) => {
+      if (!pieces || typeof pieces !== "object") return;
+
+      if (!result[job.code][setId]) {
+        result[job.code][setId] = {};
+      }
+
+      Object.entries(pieces).forEach(([itemId, value]) => {
         if (EQUIPMENT_STAGES.some(stage => stage.id === value)) {
-          result[job.code][set.id][slot.id] = value;
+          result[job.code][setId][itemId] = value;
         }
       });
     });
