@@ -209,19 +209,12 @@ function getEquipmentGroups(job, origin) {
 
   return Object.values(groups).map(group => {
     group.items.sort((a, b) => {
-      const stageOrder = item => {
-        const stage = getEquipmentStage(item);
-
-        if (stage === "109") return 0;
-        if (stage === "119") return 1;
-        if (stage && stage.startsWith("119+")) {
-          return 1 + Number(stage.split("+")[1]);
-        }
-
-        return 10;
+      const getOrder = item => {
+        const match = item.name.match(/\+([1-4])$/);
+        return match ? Number(match[1]) : 0;
       };
-
-      return stageOrder(a) - stageOrder(b);
+    
+      return getOrder(a) - getOrder(b);
     });
 
     return group;
