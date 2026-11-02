@@ -59,8 +59,7 @@ function getEquipmentStage(item) {
 function getEquipmentBaseName(name) {
   return String(name || "")
     .replace(/\s*\+[1-4]$/, "")
-    .trim()
-    .toLowerCase();
+    .trim();
 }
 
 function getEquipmentOrigins() {
@@ -196,7 +195,7 @@ function getEquipmentGroups(job, origin) {
   items.forEach(item => {
     const slotId = String(item.itemslot || "").toLowerCase();
     const baseName = getEquipmentBaseName(item.name);
-    const key = `${slotId}::${baseName}`;
+    const key = `${slotId}::${baseName.toLowerCase()}`;
 
     if (!groups[key]) {
       groups[key] = {
