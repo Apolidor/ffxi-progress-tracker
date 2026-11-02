@@ -182,6 +182,17 @@ function normalizeEquipmentProgress(saved) {
 }
 
 function getEquipmentGroups(job, origin) {
+  console.table(
+  equipmentItemsCache.filter(item =>
+    item.name.toLowerCase().includes("agoge calligae")
+  ).map(item => ({
+    name: item.name,
+    itemslot: item.itemslot,
+    set: item.set,
+    jobs: item.jobs,
+    normalized: getEquipmentBaseName(item.name).toLowerCase()
+  }))
+);
   if (!equipmentItemsCache) return [];
 
   const items = equipmentItemsCache.filter(item =>
