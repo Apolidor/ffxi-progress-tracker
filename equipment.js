@@ -58,6 +58,7 @@ function getEquipmentStage(item) {
 
 function getEquipmentBaseName(name) {
   return String(name || "")
+    .trim()
     .replace(/\s*\+[1-4]$/, "")
     .trim();
 }
@@ -223,7 +224,7 @@ function getEquipmentGroups(job, origin) {
   return Object.values(groups).map(group => {
     group.items.sort((a, b) => {
       const getOrder = item => {
-        const match = item.name.match(/\+([1-4])$/);
+        const match = item.name.trim().match(/\+([1-4])$/);
         return match ? Number(match[1]) : 0;
       };
     
