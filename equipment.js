@@ -366,13 +366,22 @@ function renderEquipment() {
                             data-job="${job.code}"
                             data-equipment-key="${group.key.replace(/"/g, "&quot;")}">
 
-                            ${iconItem ? `
+                            ${currentItem ? `
                               <img
-                                src="https://static.ffxiah.com/images/icon/${iconItem.item_id}.png"
-                                alt=""
+                                src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
+                                alt="${currentItem.name}"
                                 loading="lazy"
                                 onerror="this.style.display='none'">
-                            ` : ""}
+                            ` : `
+                              <div class="equipment-placeholder-icon">
+                                <svg viewBox="0 0 48 48" width="32" height="32"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M16 8h16l8 8v16l-8 8H16l-8-8V16z"/>
+                                  <path d="M17 24h14M24 17v14"/>
+                                </svg>
+                              </div>
+                            `}
 
                             <span>
                               ${currentItem
@@ -693,6 +702,21 @@ function injectEquipmentStyles() {
     .equipment-empty {
       color: var(--muted);
       text-align: center;
+    }
+
+    .equipment-placeholder-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #68778b;
+      opacity: 0.65;
+    }
+    
+    .equipment-placeholder-icon svg {
+      width: 32px;
+      height: 32px;
     }
 
   `;
