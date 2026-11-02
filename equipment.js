@@ -6,31 +6,52 @@ let equipmentSaveTimer = null;
 let equipmentItemsCache = null;
 let equipmentItemsLoading = false;
 
+
 async function loadEquipmentItems() {
   if (equipmentItemsCache !== null || equipmentItemsLoading) return;
 
   equipmentItemsLoading = true;
 
-  const { data, error } = await db
-    .from("equipment")
-    .select("item_id, name, itemslot, item_level, jobs, set");
+  const pageSize = 1000;
+  let allItems = [];
+  let from = 0;
 
-  equipmentItemsLoading = false;
+  try {
+    while (true) {
+      const { data, error } = await db
+        .from("equipment")
+        .select("item_id, name, itemslot, item_level, jobs, set")
+        .range(from, from + pageSize - 1);
 
-  if (error) {
+      if (error) throw error;
+
+      allItems = allItems.concat(data || []);
+
+      if (!data || data.length < pageSize) break;
+
+      from += pageSize;
+    }
+
+    equipmentItemsCache = allItems;
+
+    console.log("Equipment geladen:", allItems.length);
+
+    populateEquipmentSubmenu();
+    renderEquipment();
+
+  } catch (error) {
     console.error("Equipment konnten nicht geladen werden:", error);
+
     const container = document.getElementById("gear-list");
     if (container) {
       container.innerHTML = `<p>Fehler beim Laden: ${error.message}</p>`;
     }
-    return;
+
+  } finally {
+    equipmentItemsLoading = false;
   }
-
-  equipmentItemsCache = data || [];
-
-  populateEquipmentSubmenu();
-  renderEquipment();
 }
+
 
 function normalizeEquipmentSet(value) {
   const set = String(value || "").toLowerCase();
