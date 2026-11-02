@@ -191,6 +191,10 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
         ◇ Ausrüstung <span id="equipment-menu-arrow">▾</span>
       </button>
       <div id="equipment-submenu" class="equipment-submenu"></div>
+      <button class="nav" id="weapons-menu-toggle" data-page="weapons">
+        ⚔ Weapons <span id="weapons-menu-arrow">▾</span>
+      </button>
+      <div id="weapons-submenu" class="equipment-submenu"></div>
       <button class="nav" data-page="goals">☑ Ziele & Erfolge</button>
       <button class="nav" data-page="collection">✧ Sammlung</button>
     </div>
@@ -293,6 +297,18 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       <div class="card">
         <h2>Ausrüstungs-Slots</h2>
         <div id="gear-list"></div>
+      </div>
+    </section>
+
+    <section class="page" id="weapons">
+      <div class="welcome">
+        <div class="eyebrow">WEAPON COLLECTION</div>
+        <h1>Weapons</h1>
+        <p>Verfolge deine Waffen und deren Upgrade-Stufen.</p>
+      </div>
+      <div class="card">
+        <h2>Weapons</h2>
+        <div id="weapon-list"></div>
       </div>
     </section>
 
