@@ -57,7 +57,10 @@ function getEquipmentStage(item) {
 }
 
 function getEquipmentBaseName(name) {
-  return name.replace(/\s\+\d+$/, "");
+  return String(name || "")
+    .replace(/\s*\+[1-4]$/, "")
+    .trim()
+    .toLowerCase();
 }
 
 function getEquipmentOrigins() {
