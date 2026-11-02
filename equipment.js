@@ -126,6 +126,256 @@ function populateEquipmentSubmenu() {
   }
 }
 
+
+let selectedWeaponSlot = "main";
+
+const WEAPON_SLOTS = [
+  { id: "main", name: "Main Hand" },
+  { id: "sub", name: "Off Hand" },
+  { id: "range", name: "Ranged" }
+];
+
+function getWeaponSlots() {
+  if (!equipmentItemsCache) return [];
+
+  return WEAPON_SLOTS.filter(slot =>
+    equipmentItemsCache.some(item =>
+      String(item.itemslot || "").toLowerCase() === slot.id
+    )
+  );
+}
+
+function populateWeaponsSubmenu() {
+  const submenu = document.getElementById("weapons-submenu");
+  if (!submenu) return;
+
+  const slots = getWeaponSlots();
+
+  submenu.innerHTML = slots.map(slot => `
+    <button type="button"
+      data-weapon-slot="${slot.id}"
+      class="${selectedWeaponSlot === slot.id ? "active" : ""}">
+      ${slot.name}
+    </button>
+  `).join("");
+
+  submenu.querySelectorAll("[data-weapon-slot]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedWeaponSlot = button.dataset.weaponSlot;
+      submenu.classList.add("open");
+      populateWeaponsSubmenu();
+      showPage("weapons");
+      renderWeapons();
+    });
+  });
+}
+
+function initWeaponNavigation() {
+  const toggle = document.getElementById("weapons-menu-toggle");
+  const submenu = document.getElementById("weapons-submenu");
+  const arrow = document.getElementById("weapons-menu-arrow");
+
+  if (!toggle || !submenu || toggle.dataset.initialized) return;
+
+  toggle.dataset.initialized = "true";
+
+  toggle.addEventListener("click", () => {
+    submenu.classList.toggle("open");
+
+    if (arrow) {
+      arrow.textContent = submenu.classList.contains("open") ? "▴" : "▾";
+    }
+
+    if (equipmentItemsCache === null) {
+      loadEquipmentItems().then(() => {
+        populateWeaponsSubmenu();
+        renderWeapons();
+      });
+    } else {
+      populateWeaponsSubmenu();
+      renderWeapons();
+    }
+  });
+}
+
+function getWeaponGroups(job, slot) {
+  if (!equipmentItemsCache) return [];
+
+  const items = equipmentItemsCache.filter(item =>
+    Array.isArray(item.jobs) &&
+    item.jobs.includes(job) &&
+    String(item.itemslot || "").toLowerCase() === slot
+  );
+
+  const groups = {};
+
+  items.forEach(item => {
+    const baseName = getEquipmentBaseName(item.name);
+    const key = `${slot}::${baseName.toLowerCase()}`;
+
+    if (!groups[key]) {
+      groups[key] = {
+        key,
+        slot,
+        baseName,
+        items: []
+      };
+    }
+
+    groups[key].items.push(item);
+  });
+
+  return Object.values(groups).map(group => {
+    group.items.sort((a, b) => {
+      const getOrder = item => {
+        const match = item.name.trim().match(/\+([1-4])$/);
+        return match ? Number(match[1]) : 0;
+      };
+
+      return getOrder(a) - getOrder(b);
+    });
+
+    return group;
+  }).sort((a, b) => a.baseName.localeCompare(b.baseName));
+}
+
+function getWeaponProgressValue(job, group) {
+  const jobProgress = activeCharacter.equipment[job];
+
+  if (!jobProgress.Weapons) {
+    jobProgress.Weapons = {};
+  }
+
+  if (jobProgress.Weapons[group.key] !== undefined) {
+    return String(jobProgress.Weapons[group.key]);
+  }
+
+  jobProgress.Weapons[group.key] = "none";
+  return "none";
+}
+
+function renderWeapons() {
+  const container = document.getElementById("weapon-list");
+  if (!container || !activeCharacter) return;
+
+  if (equipmentItemsCache === null) {
+    container.innerHTML = "<p>Weapons werden geladen ...</p>";
+    loadEquipmentItems().then(renderWeapons);
+    return;
+  }
+
+  const slot = WEAPON_SLOTS.find(item => item.id === selectedWeaponSlot);
+
+  if (!slot) {
+    container.innerHTML = "<p>Keine Waffenkategorie gefunden.</p>";
+    return;
+  }
+
+  const jobs = FFXI_JOBS.map(job => ({
+    ...job,
+    groups: getWeaponGroups(job.code, selectedWeaponSlot)
+  }));
+
+  const availableJobs = jobs.filter(job => job.groups.length > 0);
+
+  const title = document.querySelector("#weapons h1");
+  if (title) title.textContent = slot.name;
+
+  if (!availableJobs.length) {
+    container.innerHTML = "<p>Für diese Kategorie wurden keine Waffen gefunden.</p>";
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="equipment-table-wrapper">
+      <div class="equipment-job-table">
+        <div class="equipment-table-header"
+             style="grid-template-columns:110px minmax(0, 1fr)">
+          <div>Job</div>
+          <div>${slot.name}</div>
+        </div>
+
+        ${availableJobs.map(job => `
+          <div class="equipment-job-row"
+               style="grid-template-columns:110px minmax(0, 1fr)">
+            <div class="equipment-job-name">
+              <strong>${job.code}</strong>
+              <small>${job.name}</small>
+            </div>
+
+            <div class="equipment-slot-cell">
+              ${job.groups.map(group => {
+                const currentValue = getWeaponProgressValue(job.code, group);
+                const currentItem = group.items.find(
+                  item => String(item.item_id) === currentValue
+                );
+
+                return `
+                  <button type="button"
+                    class="equipment-row-item"
+                    data-weapon-job="${job.code}"
+                    data-weapon-key="${group.key.replace(/"/g, "&quot;")}">
+
+                    ${currentItem ? `
+                      <img
+                        src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
+                        alt="${currentItem.name}"
+                        loading="lazy"
+                        onerror="this.style.display='none'">
+                    ` : `
+                      <div class="equipment-placeholder-icon">
+                        <svg viewBox="0 0 48 48" width="32" height="32"
+                             fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M16 8h16l8 8v16l-8 8H16l-8-8V16z"/>
+                          <path d="M17 24h14M24 17v14"/>
+                        </svg>
+                      </div>
+                    `}
+
+                    <span>${currentItem ? currentItem.name : group.baseName}</span>
+                    <small>${currentItem ? "Obtained" : "Not obtained"}</small>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+    <div id="weapon-save-status" class="ffxi-save-status" role="status">
+      Ready
+    </div>
+  `;
+
+  container.querySelectorAll("[data-weapon-job]").forEach(button => {
+    button.addEventListener("click", () => {
+      const job = button.dataset.weaponJob;
+      const group = getWeaponGroups(job, selectedWeaponSlot)
+        .find(item => item.key === button.dataset.weaponKey);
+
+      if (!group) return;
+
+      const currentValue = getWeaponProgressValue(job, group);
+      const options = [
+        "none",
+        ...group.items.map(item => String(item.item_id))
+      ];
+
+      const currentIndex = options.indexOf(currentValue);
+      const nextIndex = (currentIndex + 1) % options.length;
+
+      activeCharacter.equipment[job].Weapons[group.key] =
+        options[nextIndex];
+
+      renderWeapons();
+      saveEquipmentSoon();
+    });
+  });
+}
+
+initWeaponNavigation();
+
+
 function initEquipmentNavigation() {
   const toggle = document.getElementById("equipment-menu-toggle");
   const submenu = document.getElementById("equipment-submenu");
