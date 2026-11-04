@@ -447,6 +447,33 @@ document.getElementById("reset").addEventListener("click", () => {
   }
 });
 
+function refresh() {
+  // Nur Ziele aktualisieren – Jobs werden von characters.js verwaltet
+  renderGoals("goal-list");
+  renderGoals("all-goals");
+
+  const count = completed.length;
+
+  document.getElementById("goal-count").textContent =
+    `${count} / ${goals.length}`;
+
+  document.getElementById("goal-progress").textContent =
+    `${Math.round(count / goals.length * 100)}% erledigt`;
+
+  document.querySelectorAll("[data-goal]").forEach(input => {
+    input.addEventListener("change", () => {
+      const id = input.dataset.goal;
+
+      completed = input.checked
+        ? [...new Set([...completed, id])]
+        : completed.filter(item => item !== id);
+
+      localStorage.setItem("ffxi_demo_goals", JSON.stringify(completed));
+      refresh();
+    });
+  });
+}
+  
 </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="equipment-data.js"></script>
