@@ -132,7 +132,7 @@ async function loadEquipmentItems() {
     while (true) {
       const { data, error } = await db
         .from("equipment")
-        .select("item_id, name, itemslot, item_level, jobs, set, ffxi_url, source_url")
+        .select("item_id, name, itemslot, item_level, jobs, set, ffxi_url")
         .range(from, from + pageSize - 1);
 
       if (error) throw error;
