@@ -142,7 +142,11 @@ async function loadProgress() {
   document.getElementById("auth-panel").style.display = "none";
 
   const profile = document.querySelector(".profile span");
-  if (profile) profile.textContent = currentUser.email;
+  if (profile) {
+    profile.textContent = activeCharacter
+      ? activeCharacter.name
+      : currentUser.email;
+  }
 
   const notice = document.querySelector(".notice");
   if (notice) {
