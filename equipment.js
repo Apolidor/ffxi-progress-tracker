@@ -5,6 +5,119 @@ let equipmentSaveTimer = null;
 let equipmentItemsCache = null;
 let equipmentItemsLoading = false;
 
+let equipmentCollectionCache = {};
+let equipmentCollectionCharacterId = null;
+let equipmentCollectionLoading = null;
+
+let equipmentCollectionLoadToken = 0;
+
+async function loadEquipmentCollection() {
+  if (!activeCharacter) return;
+
+  const characterId = activeCharacter.id;
+
+  if (equipmentCollectionCharacterId === characterId) return;
+
+  const token = ++equipmentCollectionLoadToken;
+
+  const { data, error } = await db
+    .from("character_collection")
+    .select("item_id, owned, progress")
+    .eq("character_id", characterId)
+    .eq("item_type", "equipment");
+
+  if (error) throw error;
+
+  // Verhindert, dass ein inzwischen veralteter Ladevorgang
+  // die Daten des aktuell ausgewählten Charakters überschreibt.
+  if (
+    token !== equipmentCollectionLoadToken ||
+    activeCharacter?.id !== characterId
+  ) {
+    return;
+  }
+
+  equipmentCollectionCache = {};
+
+  (data || []).forEach(item => {
+    equipmentCollectionCache[item.item_id] = item;
+  });
+
+  equipmentCollectionCharacterId = characterId;
+}
+
+function getEquipmentCollectionId(type, job, origin, group) {
+  if (type === "weapon") {
+    return `weapon:${job}:${group.key}`;
+  }
+
+  return `armor:${job}:${origin}:${group.key}`;
+}
+
+function getCollectionEquipmentValue(itemId) {
+  const entry = equipmentCollectionCache[itemId];
+
+  if (!entry || !entry.owned) return "none";
+
+  return String(entry.progress?.stage_item_id || "none");
+}
+
+async function saveEquipmentCollectionItem({
+  itemId,
+  value,
+  job,
+  origin,
+  group,
+  type
+}) {
+  if (!activeCharacter || !currentUser) return;
+
+  const characterId = activeCharacter.id;
+  const owned = value !== "none";
+
+  const progress = {
+    stage_item_id: owned ? Number(value) : null,
+    job,
+    slot: group.slotId || group.slot,
+    set: origin || "Weapons",
+    category: type,
+    base_name: group.baseName
+  };
+
+  const row = {
+    character_id: characterId,
+    item_type: "equipment",
+    item_id: itemId,
+    owned,
+    progress,
+    updated_at: new Date().toISOString()
+  };
+
+  // Cache sofort aktualisieren, damit die Anzeige direkt stimmt.
+  equipmentCollectionCache[itemId] = row;
+
+  const status = document.getElementById(
+    type === "weapon" ? "weapon-save-status" : "equipment-save-status"
+  );
+
+  if (status) status.textContent = "Saving…";
+
+  const { error } = await db
+    .from("character_collection")
+    .upsert(row, {
+      onConflict: "character_id,item_type,item_id"
+    });
+
+  if (error) {
+    console.error("Equipment konnte nicht gespeichert werden:", error);
+    if (status) status.textContent = "Save failed: " + error.message;
+    return;
+  }
+
+  if (status && activeCharacter?.id === characterId) {
+    status.textContent = "✓ Saved online";
+  }
+}
 
 async function loadEquipmentItems() {
   if (equipmentItemsCache !== null || equipmentItemsLoading) return;
@@ -238,18 +351,14 @@ function getWeaponGroups(job, slot) {
 }
 
 function getWeaponProgressValue(job, group) {
-  const jobProgress = activeCharacter.equipment[job];
+  const itemId = getEquipmentCollectionId(
+    "weapon",
+    job,
+    null,
+    group
+  );
 
-  if (!jobProgress.Weapons) {
-    jobProgress.Weapons = {};
-  }
-
-  if (jobProgress.Weapons[group.key] !== undefined) {
-    return String(jobProgress.Weapons[group.key]);
-  }
-
-  jobProgress.Weapons[group.key] = "none";
-  return "none";
+  return getCollectionEquipmentValue(itemId);
 }
 
 function renderWeapons() {
@@ -262,6 +371,20 @@ function renderWeapons() {
     return;
   }
 
+  if (equipmentCollectionCharacterId !== activeCharacter.id) {
+    container.innerHTML = "<p>Equipment-Fortschritt wird geladen ...</p>";
+
+    loadEquipmentCollection()
+      .then(renderWeapons)
+      .catch(error => {
+        console.error(error);
+        container.innerHTML =
+          `<p>Fehler beim Laden des Fortschritts: ${error.message}</p>`;
+      });
+
+    return;
+  }
+  
   const slot = WEAPON_SLOTS.find(item => item.id === selectedWeaponSlot);
 
   if (!slot) {
@@ -346,27 +469,39 @@ function renderWeapons() {
   `;
 
   container.querySelectorAll("[data-weapon-job]").forEach(button => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const job = button.dataset.weaponJob;
       const group = getWeaponGroups(job, selectedWeaponSlot)
         .find(item => item.key === button.dataset.weaponKey);
-
+  
       if (!group) return;
-
+  
       const currentValue = getWeaponProgressValue(job, group);
+  
       const options = [
         "none",
         ...group.items.map(item => String(item.item_id))
       ];
-
+  
       const currentIndex = options.indexOf(currentValue);
-      const nextIndex = (currentIndex + 1) % options.length;
-
-      activeCharacter.equipment[job].Weapons[group.key] =
-        options[nextIndex];
-
+      const nextValue = options[(currentIndex + 1) % options.length];
+  
+      const itemId = getEquipmentCollectionId(
+        "weapon",
+        job,
+        null,
+        group
+      );
+  
+      await saveEquipmentCollectionItem({
+        itemId,
+        value: nextValue,
+        job,
+        group,
+        type: "weapon"
+      });
+  
       renderWeapons();
-      saveEquipmentSoon();
     });
   });
 }
@@ -501,37 +636,14 @@ function getEquipmentGroups(job, origin) {
 
 
 function getEquipmentProgressValue(job, origin, group) {
-  const jobProgress = activeCharacter.equipment[job];
+  const itemId = getEquipmentCollectionId(
+    "armor",
+    job,
+    origin,
+    group
+  );
 
-  if (!jobProgress[origin]) {
-    jobProgress[origin] = {};
-  }
-
-  // Neue Speicherung: Fortschritt pro Ausrüstungsreihe.
-  if (jobProgress[origin][group.key] !== undefined) {
-    return String(jobProgress[origin][group.key]);
-  }
-
-  // Alte Speicherung übernehmen: AF, Relic und Empyrean.
-  const oldSet = normalizeEquipmentSet(origin);
-
-  if (oldSet && jobProgress[oldSet]) {
-    const oldStage = jobProgress[oldSet][group.slotId];
-
-    if (oldStage && oldStage !== "none") {
-      const matchingItem = group.items.find(
-        item => getEquipmentStage(item) === oldStage
-      );
-
-      if (matchingItem) {
-        jobProgress[origin][group.key] = String(matchingItem.item_id);
-        return String(matchingItem.item_id);
-      }
-    }
-  }
-
-  jobProgress[origin][group.key] = "none";
-  return "none";
+  return getCollectionEquipmentValue(itemId);
 }
 
 
@@ -554,11 +666,22 @@ function renderEquipment() {
     return;
   }
 
+    if (equipmentCollectionCharacterId !== activeCharacter.id) {
+    container.innerHTML = "<p>Equipment-Fortschritt wird geladen ...</p>";
+
+    loadEquipmentCollection()
+      .then(renderEquipment)
+      .catch(error => {
+        console.error(error);
+        container.innerHTML =
+          `<p>Fehler beim Laden des Fortschritts: ${error.message}</p>`;
+      });
+
+    return;
+  }
+
   injectEquipmentStyles();
 
-  activeCharacter.equipment = normalizeEquipmentProgress(
-    activeCharacter.equipment
-  );
 
   if (!selectedEquipmentOrigin) {
     selectedEquipmentOrigin = getEquipmentOrigins()[0] || null;
@@ -755,86 +878,55 @@ function renderEquipment() {
   `;
 
   container.querySelectorAll(".equipment-row-item")
-    .forEach(button => {
-      button.addEventListener("click", () => {
-        const jobCodes = button.dataset.jobs.split(",");
-        const equipmentKey = button.dataset.equipmentKey;
+  .forEach(button => {
+    button.addEventListener("click", async () => {
+      const jobCodes = button.dataset.jobs.split(",");
+      const equipmentKey = button.dataset.equipmentKey;
 
-        jobCodes.forEach(jobCode => {
-          const job = jobs.find(item => item.code === jobCode);
-          if (!job) return;
+      for (const jobCode of jobCodes) {
+        const job = jobs.find(item => item.code === jobCode);
+        if (!job) continue;
 
-          const group = job.groups.find(
-            item => item.key === equipmentKey
-          );
+        const group = job.groups.find(
+          item => item.key === equipmentKey
+        );
 
-          if (!group) return;
+        if (!group) continue;
 
-          const currentValue = getEquipmentProgressValue(
-            jobCode,
-            selectedEquipmentOrigin,
-            group
-          );
+        const currentValue = getEquipmentProgressValue(
+          jobCode,
+          selectedEquipmentOrigin,
+          group
+        );
 
-          const options = [
-            "none",
-            ...group.items.map(item => String(item.item_id))
-          ];
+        const options = [
+          "none",
+          ...group.items.map(item => String(item.item_id))
+        ];
 
-          const currentIndex = options.indexOf(currentValue);
-          const nextIndex = (currentIndex + 1) % options.length;
+        const currentIndex = options.indexOf(currentValue);
+        const nextValue = options[(currentIndex + 1) % options.length];
 
-          activeCharacter.equipment[jobCode]
-            [selectedEquipmentOrigin][group.key] = options[nextIndex];
+        const itemId = getEquipmentCollectionId(
+          "armor",
+          jobCode,
+          selectedEquipmentOrigin,
+          group
+        );
+
+        await saveEquipmentCollectionItem({
+          itemId,
+          value: nextValue,
+          job: jobCode,
+          origin: selectedEquipmentOrigin,
+          group,
+          type: "armor"
         });
+      }
 
-        renderEquipment();
-        saveEquipmentSoon();
-      });
+      renderEquipment();
     });
-}
-
-function saveEquipmentSoon() {
-  const status = document.getElementById("equipment-save-status");
-
-  if (status) status.textContent = "Saving…";
-
-  clearTimeout(equipmentSaveTimer);
-  equipmentSaveTimer = setTimeout(saveCharacterEquipment, 400);
-}
-
-async function saveCharacterEquipment() {
-  if (!activeCharacter || !currentUser) return;
-
-  const characterId = activeCharacter.id;
-
-  const equipmentToSave = normalizeEquipmentProgress(
-    activeCharacter.equipment
-  );
-
-  const { error } = await db
-    .from("characters")
-    .update({
-      equipment: equipmentToSave,
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", characterId)
-    .eq("user_id", currentUser.id);
-
-  const status = document.getElementById("equipment-save-status");
-
-  if (error) {
-    if (status) status.textContent = "Save failed: " + error.message;
-    return;
-  }
-
-  const character = characters.find(item => item.id === characterId);
-
-  if (character) character.equipment = equipmentToSave;
-
-  if (status && activeCharacter?.id === characterId) {
-    status.textContent = "✓ Saved online";
-  }
+  });
 }
 
 initEquipmentNavigation();
