@@ -107,6 +107,16 @@ async function loadProgress() {
 
   currentUser = authData.user;
 
+  // Charakterverwaltung unabhängig von der alten Checkliste laden.
+  try {
+    await initCharacters();
+  } catch (error) {
+    console.error("Character initialization failed:", error);
+    authMessage.textContent =
+      "Charaktere konnten nicht geladen werden: " + error.message;
+  }
+
+  // Alte Checkliste laden.
   const { data, error } = await db
     .from("player_progress")
     .select("data")
@@ -114,20 +124,21 @@ async function loadProgress() {
     .maybeSingle();
 
   if (error) {
-    authMessage.textContent = "Laden fehlgeschlagen: " + error.message;
-    return;
-  }
-
-  if (data) {
-    completed = Array.isArray(data.data.completedGoals)
-      ? data.data.completedGoals
-      : [];
+    console.error("Progress loading failed:", error);
+    authMessage.textContent =
+      "Checkliste konnte nicht geladen werden: " + error.message;
   } else {
-    // Vorhandene lokale Checkliste beim ersten Login übernehmen.
-    await saveProgress();
+    if (data) {
+      completed = Array.isArray(data.data.completedGoals)
+        ? data.data.completedGoals
+        : [];
+    } else {
+      await saveProgress();
+    }
+
+    refresh();
   }
 
-  refresh();
   document.getElementById("auth-panel").style.display = "none";
 
   const profile = document.querySelector(".profile span");
@@ -140,18 +151,20 @@ async function loadProgress() {
   }
 
   let logoutButton = document.getElementById("auth-logout");
+
   if (!logoutButton) {
     logoutButton = document.createElement("button");
     logoutButton.id = "auth-logout";
     logoutButton.className = "action";
     logoutButton.textContent = "Abmelden";
+
     document.querySelector(".profile").appendChild(logoutButton);
+
     logoutButton.addEventListener("click", async () => {
       await db.auth.signOut();
       location.reload();
     });
-  }    
-  await initCharacters();
+  }
 }
 
 async function saveProgress() {
