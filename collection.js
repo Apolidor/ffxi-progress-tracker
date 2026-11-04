@@ -6,6 +6,7 @@ let collectionCatalog = {
 
 let collectionOwned = {};
 let selectedCollectionType = "trust";
+let selectedCollectionCategory = "all";
 let collectionLoadToken = 0;
 
 async function loadCollectionCatalog(type) {
@@ -24,6 +25,29 @@ async function loadCollectionCatalog(type) {
 
   collectionCatalog[type] = data || [];
   return collectionCatalog[type];
+}
+
+function applyCollectionFilter() {
+  const container = document.getElementById("collection-content");
+  if (!container) return;
+
+  const category = selectedCollectionCategory;
+
+  container.querySelectorAll(".collection-item").forEach(card => {
+    card.style.display =
+      category === "all" ||
+      card.dataset.category === category
+        ? ""
+        : "none";
+  });
+
+  container.querySelectorAll("[data-collection-category]")
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.collectionCategory === category
+      );
+    });
 }
 
 async function loadCharacterCollection() {
@@ -193,23 +217,12 @@ function renderCollection() {
   container.querySelectorAll("[data-collection-category]")
     .forEach(button => {
       button.addEventListener("click", () => {
-        const category = button.dataset.collectionCategory;
-
-        container.querySelectorAll(".collection-item")
-          .forEach(card => {
-            card.style.display =
-              category === "all" ||
-              card.dataset.category === category
-                ? ""
-                : "none";
-          });
-
-        container.querySelectorAll("[data-collection-category]")
-          .forEach(filter => filter.classList.remove("active"));
-
-        button.classList.add("active");
+        selectedCollectionCategory = button.dataset.collectionCategory;
+        applyCollectionFilter();
       });
     });
+  
+  applyCollectionFilter();
 }
 
 async function initCollection() {
@@ -247,13 +260,6 @@ function injectCollectionStyles() {
   style.id = "ffxi-collection-styles";
 
   style.textContent = `
-    .collection-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .collection-tabs button.active,
     .collection-category-list button.active {
       border-color: var(--accent);
       color: var(--accent);
@@ -360,19 +366,6 @@ function injectCollectionStyles() {
   document.head.appendChild(style);
 }
 
-function setCollectionType(type) {
-  selectedCollectionType = type;
-
-  document.querySelectorAll("[data-collection-tab]")
-    .forEach(button => {
-      button.classList.toggle(
-        "active",
-        button.dataset.collectionTab === type
-      );
-    });
-
-  renderCollection();
-}
 
 // Nach der Charakterauswahl die passende Sammlung laden.
 const originalSelectCharacter = selectCharacter;
@@ -404,6 +397,7 @@ function initCollectionNavigation() {
   submenu.querySelectorAll("[data-collection-type]").forEach(button => {
     button.addEventListener("click", () => {
       selectedCollectionType = button.dataset.collectionType;
+      selectedCollectionCategory = "all";
 
       submenu.querySelectorAll("button").forEach(item => {
         item.classList.toggle("active", item === button);
