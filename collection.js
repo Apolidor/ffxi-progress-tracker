@@ -186,11 +186,25 @@ function renderCollection() {
             title="${escapeCollectionText(item.name)}">
 
             <div class="collection-image">
-              <img
-                src="${escapeCollectionText(item.image_url || "")}"
-                alt="${escapeCollectionText(item.name)}"
-                loading="lazy"
-                onerror="this.style.display='none'">
+              ${item.source_url ? `
+                <a
+                  href="${escapeCollectionText(item.source_url)}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onclick="event.stopPropagation()">
+                  <img
+                    src="${escapeCollectionText(item.image_url || "")}"
+                    alt="${escapeCollectionText(item.name)}"
+                    loading="lazy"
+                    onerror="this.style.display='none'">
+                </a>
+              ` : `
+                <img
+                  src="${escapeCollectionText(item.image_url || "")}"
+                  alt="${escapeCollectionText(item.name)}"
+                  loading="lazy"
+                  onerror="this.style.display='none'">
+              `}
             </div>
 
             <strong>${escapeCollectionText(item.name)}</strong>
