@@ -328,11 +328,27 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       <div class="welcome">
         <div class="eyebrow">TREASURES OF VANA'DIEL</div>
         <h1>Sammlung</h1>
-        <p>Monster, seltene Drops, Materialien und Erfolge.</p>
+        <p>Verwalte deine freigeschalteten Trusts und Mounts.</p>
       </div>
+    
       <div class="card">
-        <h2>Sammlung</h2>
-        <div class="empty">Dieser Bereich wird im nächsten Ausbauschritt eingerichtet.</div>
+        <div class="collection-tabs">
+          <button class="action active"
+            data-collection-tab="trust"
+            onclick="setCollectionType('trust')">
+            Trusts
+          </button>
+    
+          <button class="action"
+            data-collection-tab="mount"
+            onclick="setCollectionType('mount')">
+            Mounts
+          </button>
+        </div>
+    
+        <div id="collection-content">
+          <p>Loading collection...</p>
+        </div>
       </div>
     </section>
   </main>
@@ -452,5 +468,6 @@ refresh();
     <script src="auth.js"></script>
     <script src="equipment.js"></script>
     <script src="characters.js"></script>
+    <script src="collection.js"></script>
 </body>
 </html>
