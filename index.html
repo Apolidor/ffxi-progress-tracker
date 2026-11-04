@@ -169,6 +169,25 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
   background: #202d3d;
   color: var(--accent);
 }
+
+/* Sammlung-Untermenü wie Gearsets untereinander anzeigen */
+#collection-submenu {
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding-left: 18px;
+}
+
+#collection-submenu.open {
+  display: flex;
+}
+
+#collection-submenu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
   
 </style>
 </head>
