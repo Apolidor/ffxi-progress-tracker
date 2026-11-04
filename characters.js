@@ -322,6 +322,16 @@ function selectCharacter(id) {
 }
 
 function renderCharacterManager() {
+  const profile = document.querySelector(".profile");
+
+  if (profile && !document.getElementById("manage-characters")) {
+    const button = document.createElement("button");
+    button.id = "manage-characters";
+    button.className = "action";
+    button.textContent = "Characters";
+    button.onclick = () => openCharacterManager();
+    profile.appendChild(button);
+  }
   const list = document.getElementById("character-list");
   if (!list) return;
 
@@ -351,16 +361,6 @@ function renderCharacterManager() {
     });
   });
 
-  const profile = document.querySelector(".profile");
-
-  if (profile && !document.getElementById("manage-characters")) {
-    const button = document.createElement("button");
-    button.id = "manage-characters";
-    button.className = "action";
-    button.textContent = "Characters";
-    button.onclick = () => openCharacterManager();
-    profile.appendChild(button);
-  }
 }
 
 function escapeCharacterText(value) {
