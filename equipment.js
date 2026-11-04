@@ -439,11 +439,10 @@ function renderWeapons() {
 
                     ${currentItem ? `
                       <a
-                        href="${currentItem.ffxi_url || currentItem.source_url || '#'}"
+                        href="${currentItem.ffxi_url || '#'}"
                         target="_blank"
                         rel="noopener noreferrer"
-                        onclick="event.stopPropagation()"
-                        ${currentItem.ffxi_url || currentItem.source_url ? "" : 'onclick="event.preventDefault(); event.stopPropagation()"'}
+                        onclick="event.preventDefault(); event.stopPropagation(); if (this.href && this.getAttribute('href') !== '#') window.open(this.href, '_blank', 'noopener,noreferrer')"
                       >
                         <img
                           src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
@@ -842,11 +841,10 @@ function renderEquipment() {
 
                               ${displayedItem ? `
                                 <a
-                                  href="${displayedItem.ffxi_url || displayedItem.source_url || '#'}"
+                                  href="${displayedItem.ffxi_url || '#'}"
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  onclick="event.stopPropagation()"
-                                  ${displayedItem.ffxi_url || displayedItem.source_url ? "" : 'onclick="event.preventDefault(); event.stopPropagation()"'}
+                                  onclick="event.preventDefault(); event.stopPropagation(); if (this.getAttribute('href') !== '#') window.open(this.href, '_blank', 'noopener,noreferrer')"
                                 >
                                   <img
                                     src="https://static.ffxiah.com/images/icon/${displayedItem.item_id}.png"
