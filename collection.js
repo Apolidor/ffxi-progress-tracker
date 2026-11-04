@@ -325,13 +325,19 @@ function injectCollectionStyles() {
     .collection-image {
       width: 100%;
       height: 105px;
-      display: grid;
-      place-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
     }
-
+    
     .collection-image img {
+      display: block;
       max-width: 100%;
-      max-height: 100%;
+      max-height: 90px;
+      width: auto;
+      height: auto;
       object-fit: contain;
     }
 
