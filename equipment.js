@@ -1,4 +1,3 @@
-
 let selectedEquipmentJob = "WAR";
 let selectedEquipmentOrigin = null;
 let equipmentSaveTimer = null;
@@ -169,7 +168,6 @@ function populateWeaponsSubmenu() {
     });
   });
 }
-
 function initWeaponNavigation() {
   const toggle = document.getElementById("weapons-menu-toggle");
   const submenu = document.getElementById("weapons-submenu");
@@ -452,19 +450,7 @@ function normalizeEquipmentProgress(saved) {
 
   return result;
 }
-
 function getEquipmentGroups(job, origin) {
-  console.table(
-  equipmentItemsCache.filter(item =>
-    item.name.toLowerCase().includes("agoge calligae")
-  ).map(item => ({
-    name: item.name,
-    itemslot: item.itemslot,
-    set: item.set,
-    jobs: item.jobs,
-    normalized: getEquipmentBaseName(item.name).toLowerCase()
-  }))
-);
   if (!equipmentItemsCache) return [];
 
   const items = equipmentItemsCache.filter(item =>
@@ -498,7 +484,7 @@ function getEquipmentGroups(job, origin) {
         const match = item.name.trim().match(/\+([1-4])$/);
         return match ? Number(match[1]) : 0;
       };
-    
+
       return getOrder(a) - getOrder(b);
     });
 
@@ -512,6 +498,7 @@ function getEquipmentGroups(job, origin) {
     return a.baseName.localeCompare(b.baseName);
   });
 }
+
 
 function getEquipmentProgressValue(job, origin, group) {
   const jobProgress = activeCharacter.equipment[job];
@@ -545,6 +532,50 @@ function getEquipmentProgressValue(job, origin, group) {
 
   jobProgress[origin][group.key] = "none";
   return "none";
+}
+
+
+// Ermittelt den eigentlichen Namen eines Rüstungssets.
+function getEquipmentSetName(itemName) {
+  const name = getEquipmentBaseName(itemName);
+
+  const armorPieces = [
+    // Kopf
+    "Mask", "Crown", "Helm", "Cap", "Hat", "Circlet",
+    "Coronet", "Bandeau", "Headgear", "Headband",
+    "Hairpin", "Hachimaki", "Kabuto", "Armet",
+    "Burgonet", "Barbut", "Sallet", "Celata",
+    "Visor", "Galea", "Coif", "Bonnet", "Beret",
+    "Chapeau", "Hood", "Wig", "Tiara",
+
+    // Körper
+    "Cuirass", "Mail", "Vest", "Harness", "Hauberk",
+    "Gambison", "Doublet", "Robe", "Cloak", "Jubbah",
+    "Gown", "Gilet", "Aketon", "Shirt", "Tunic",
+    "Briault", "Tabard", "Surcoat", "Plackart",
+
+    // Hände
+    "Gloves", "Gauntlets", "Mitts", "Cuffs",
+    "Bracers", "Manopolas", "Bangles", "Tekko",
+
+    // Beine und Füße
+    "Sollerets", "Greaves", "Sabatons", "Boots",
+    "Gaiters", "Leggings", "Spats", "Hose",
+    "Cuisses", "Trousers", "Slops", "Breeches",
+    "Pantaloons", "Chausses", "Shinguards"
+  ];
+
+  for (const piece of armorPieces) {
+    const suffix = new RegExp(`\\s+${piece}$`, "i");
+
+    if (suffix.test(name)) {
+      return name.replace(suffix, "").trim();
+    }
+  }
+
+  // Falls kein bekanntes Rüstungsteil erkannt wird:
+  // den ersten Namensteil als Setnamen verwenden.
+  return name.split(/\s+/)[0];
 }
 
 
@@ -591,89 +622,132 @@ function renderEquipment() {
   const title = document.querySelector("#equipment h1");
   if (title) title.textContent = selectedEquipmentOrigin;
 
+  // Rüstungssets nach ihrem Namen gruppieren.
+  const sets = {};
+
+  availableJobs.forEach(job => {
+    job.groups.forEach(group => {
+      const setName = getEquipmentSetName(group.baseName);
+      const setKey = setName.toLowerCase();
+
+      if (!sets[setKey]) {
+        sets[setKey] = {
+          setName,
+          jobs: {}
+        };
+      }
+
+      if (!sets[setKey].jobs[job.code]) {
+        sets[setKey].jobs[job.code] = {
+          ...job,
+          groups: []
+        };
+      }
+
+      sets[setKey].jobs[job.code].groups.push(group);
+    });
+  });
+
+  const availableSets = Object.values(sets).sort((a, b) =>
+    a.setName.localeCompare(b.setName)
+  );
+
   container.innerHTML = `
     <div class="equipment-table-wrapper">
       <div class="equipment-job-table">
 
         <div class="equipment-table-header">
-          <div class="equipment-job-heading">Job</div>
+          <div class="equipment-job-heading">Set</div>
           ${slots.map(slot => `
             <div>${slot.name}</div>
           `).join("")}
         </div>
 
-        ${availableJobs.map(job => `
-          <div class="equipment-job-row">
+        ${availableSets.map(set => {
+          const setJobs = Object.values(set.jobs);
+          const jobCodes = setJobs.map(job => job.code).join(" · ");
 
-            <div class="equipment-job-name">
-              <strong>${job.code}</strong>
-              <small>${job.name}</small>
+          return `
+            <div class="equipment-job-row">
+
+              <div class="equipment-job-name">
+                <strong>${set.setName}</strong>
+                <small>${jobCodes}</small>
+              </div>
+
+              ${slots.map(slot => {
+                const slotEntries = [];
+
+                setJobs.forEach(job => {
+                  const groups = job.groups.filter(
+                    group => group.slotId === slot.id
+                  );
+
+                  groups.forEach(group => {
+                    slotEntries.push({ job, group });
+                  });
+                });
+
+                return `
+                  <div class="equipment-slot-cell">
+                    ${slotEntries.length
+                      ? slotEntries.map(({ job, group }) => {
+                          const currentValue = getEquipmentProgressValue(
+                            job.code,
+                            selectedEquipmentOrigin,
+                            group
+                          );
+
+                          const currentItem = group.items.find(
+                            item => String(item.item_id) === currentValue
+                          );
+
+                          return `
+                            <button type="button"
+                              class="equipment-row-item"
+                              data-job="${job.code}"
+                              data-equipment-key="${group.key.replace(/"/g, "&quot;")}">
+
+                              ${currentItem ? `
+                                <img
+                                  src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
+                                  alt="${currentItem.name}"
+                                  loading="lazy"
+                                  onerror="this.style.display='none'">
+                              ` : `
+                                <div class="equipment-placeholder-icon">
+                                  <svg viewBox="0 0 48 48" width="32" height="32"
+                                       fill="none" stroke="currentColor" stroke-width="2"
+                                       stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M16 8h16l8 8v16l-8 8H16l-8-8V16z"/>
+                                    <path d="M17 24h14M24 17v14"/>
+                                  </svg>
+                                </div>
+                              `}
+
+                              <span>
+                                ${currentItem
+                                  ? currentItem.name
+                                  : group.baseName}
+                              </span>
+
+                              <small>
+                                ${job.code} · ${currentItem
+                                  ? "Obtained"
+                                  : "Not obtained"}
+                              </small>
+                            </button>
+                          `;
+                        }).join("")
+                      : '<span class="equipment-empty">–</span>'
+                    }
+                  </div>
+                `;
+              }).join("")}
+
             </div>
-
-            ${slots.map(slot => {
-              const groups = job.groups.filter(
-                group => group.slotId === slot.id
-              );
-
-              return `
-                <div class="equipment-slot-cell">
-                  ${groups.length
-                    ? groups.map(group => {
-                        const currentValue = getEquipmentProgressValue(
-                          job.code,
-                          selectedEquipmentOrigin,
-                          group
-                        );
-
-                        const currentItem = group.items.find(
-                          item => String(item.item_id) === currentValue
-                        );
-
-                        const iconItem = currentItem || group.items[0];
-
-                        return `
-                          <button type="button"
-                            class="equipment-row-item"
-                            data-job="${job.code}"
-                            data-equipment-key="${group.key.replace(/"/g, "&quot;")}">
-
-                            ${currentItem ? `
-                              <img
-                                src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
-                                alt="${currentItem.name}"
-                                loading="lazy"
-                                onerror="this.style.display='none'">
-                            ` : `
-                              <div class="equipment-placeholder-icon">
-                                <svg viewBox="0 0 48 48" width="32" height="32"
-                                     fill="none" stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M16 8h16l8 8v16l-8 8H16l-8-8V16z"/>
-                                  <path d="M17 24h14M24 17v14"/>
-                                </svg>
-                              </div>
-                            `}
-
-                            <span>
-                              ${currentItem
-                                ? currentItem.name
-                                : group.baseName}
-                            </span>
-
-                            <small>
-                              ${currentItem ? "Obtained" : "Not obtained"}
-                            </small>
-                          </button>
-                        `;
-                      }).join("")
-                    : '<span class="equipment-empty">–</span>'
-                  }
-                </div>
-              `;
-            }).join("")}
-
-          </div>
-        `).join("")}
+          `;
+        }).join("")}
 
       </div>
     </div>
@@ -717,8 +791,6 @@ function renderEquipment() {
       });
     });
 }
-
-
 function saveEquipmentSoon() {
   const status = document.getElementById("equipment-save-status");
 
@@ -763,7 +835,6 @@ async function saveCharacterEquipment() {
 }
 
 initEquipmentNavigation();
-
 function injectEquipmentStyles() {
   if (document.getElementById("ffxi-equipment-styles")) return;
 
@@ -863,17 +934,16 @@ function injectEquipmentStyles() {
       font-size: 12px;
       color: var(--muted);
     }
-    
+
     .equipment-stat {
       white-space: nowrap;
     }
 
-    
     .equipment-table-wrapper {
       overflow-x: auto;
       width: 100%;
     }
-    
+
     .equipment-job-table {
       min-width: 850px;
       border: 1px solid var(--border);
@@ -881,13 +951,13 @@ function injectEquipmentStyles() {
       overflow: hidden;
       background: var(--panel);
     }
-    
+
     .equipment-table-header,
     .equipment-job-row {
       display: grid;
       grid-template-columns: 110px repeat(5, minmax(130px, 1fr));
     }
-    
+
     .equipment-table-header {
       background: var(--panel2);
       color: var(--muted);
@@ -895,16 +965,16 @@ function injectEquipmentStyles() {
       font-weight: bold;
       text-align: center;
     }
-    
+
     .equipment-table-header > div {
       padding: 14px 8px;
       border-right: 1px solid var(--border);
     }
-    
+
     .equipment-job-row {
       border-top: 1px solid var(--border);
     }
-    
+
     .equipment-job-name {
       display: flex;
       flex-direction: column;
@@ -912,17 +982,17 @@ function injectEquipmentStyles() {
       padding: 10px;
       border-right: 1px solid var(--border);
     }
-    
+
     .equipment-job-name strong {
       font-size: 15px;
       color: var(--accent);
     }
-    
+
     .equipment-job-name small {
       color: var(--muted);
       font-size: 11px;
     }
-    
+
     .equipment-slot-cell {
       display: flex;
       flex-direction: column;
@@ -932,7 +1002,7 @@ function injectEquipmentStyles() {
       border-right: 1px solid var(--border);
       min-width: 0;
     }
-    
+
     .equipment-row-item {
       display: flex;
       flex-direction: column;
@@ -948,28 +1018,28 @@ function injectEquipmentStyles() {
       cursor: pointer;
       text-align: center;
     }
-    
+
     .equipment-row-item:hover {
       border-color: var(--accent);
       background: var(--panel2);
     }
-    
+
     .equipment-row-item img {
       width: 32px;
       height: 32px;
       object-fit: contain;
     }
-    
+
     .equipment-row-item span {
       font-size: 11px;
       overflow-wrap: anywhere;
     }
-    
+
     .equipment-row-item small {
       color: var(--muted);
       font-size: 10px;
     }
-    
+
     .equipment-empty {
       color: var(--muted);
       text-align: center;
@@ -984,7 +1054,7 @@ function injectEquipmentStyles() {
       color: #68778b;
       opacity: 0.65;
     }
-    
+
     .equipment-placeholder-icon svg {
       width: 32px;
       height: 32px;
