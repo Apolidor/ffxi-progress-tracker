@@ -132,7 +132,7 @@ async function loadEquipmentItems() {
     while (true) {
       const { data, error } = await db
         .from("equipment")
-        .select("item_id, name, itemslot, item_level, jobs, set")
+        .select("item_id, name, itemslot, item_level, jobs, set, ffxi_url, source_url")
         .range(from, from + pageSize - 1);
 
       if (error) throw error;
@@ -438,11 +438,19 @@ function renderWeapons() {
                     data-weapon-key="${group.key.replace(/"/g, "&quot;")}">
 
                     ${currentItem ? `
-                      <img
-                        src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
-                        alt="${currentItem.name}"
-                        loading="lazy"
-                        onerror="this.style.display='none'">
+                      <a
+                        href="${currentItem.ffxi_url || currentItem.source_url || '#'}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onclick="event.stopPropagation()"
+                        ${currentItem.ffxi_url || currentItem.source_url ? "" : 'onclick="event.preventDefault(); event.stopPropagation()"'}
+                      >
+                        <img
+                          src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
+                          alt="${currentItem.name}"
+                          loading="lazy"
+                          onerror="this.style.display='none'">
+                      </a>
                     ` : `
                       <div class="equipment-placeholder-icon">
                         <svg viewBox="0 0 48 48" width="32" height="32"
@@ -833,11 +841,19 @@ function renderEquipment() {
                               data-equipment-key="${group.key.replace(/"/g, "&quot;")}">
 
                               ${displayedItem ? `
-                                <img
-                                  src="https://static.ffxiah.com/images/icon/${displayedItem.item_id}.png"
-                                  alt="${displayedItem.name}"
-                                  loading="lazy"
-                                  onerror="this.style.display='none'">
+                                <a
+                                  href="${displayedItem.ffxi_url || displayedItem.source_url || '#'}"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onclick="event.stopPropagation()"
+                                  ${displayedItem.ffxi_url || displayedItem.source_url ? "" : 'onclick="event.preventDefault(); event.stopPropagation()"'}
+                                >
+                                  <img
+                                    src="https://static.ffxiah.com/images/icon/${displayedItem.item_id}.png"
+                                    alt="${displayedItem.name}"
+                                    loading="lazy"
+                                    onerror="this.style.display='none'">
+                                </a>
                               ` : `
                                 <div class="equipment-placeholder-icon">
                                   <svg viewBox="0 0 48 48"
