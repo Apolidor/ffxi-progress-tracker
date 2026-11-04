@@ -385,12 +385,6 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
 </div>
 
 <script>
-const jobs = [
-  { name: "Paladin", code: "PLD", level: 75, icon: "🛡" },
-  { name: "Krieger", code: "WAR", level: 42, icon: "⚔" },
-  { name: "Weißmagier", code: "WHM", level: 37, icon: "✧" },
-  { name: "Dieb", code: "THF", level: 25, icon: "🗡" }
-];
 
 const goals = [
   { id: "g1", name: "Hauptjob weiterentwickeln", detail: "Job-Level · Paladin" },
@@ -408,21 +402,6 @@ const gearSlots = [
 
 let completed = JSON.parse(localStorage.getItem("ffxi_demo_goals") || "[]");
 
-function renderJobs(target) {
-  document.getElementById(target).innerHTML = jobs.map(job => `
-    <div class="job">
-      <div class="job-top">
-        <div class="job-name">
-          <div class="job-icon">${job.icon}</div>
-          <div><h3>${job.name}</h3><div class="job-meta">${job.code}</div></div>
-        </div>
-        <strong>${job.level} / 99</strong>
-      </div>
-      <div class="track"><div class="fill" style="width:${job.level / 99 * 100}%"></div></div>
-    </div>
-  `).join("");
-}
-
 function renderGoals(target) {
   document.getElementById(target).innerHTML = goals.map(goal => `
     <div class="goal ${completed.includes(goal.id) ? "done" : ""}">
@@ -433,29 +412,6 @@ function renderGoals(target) {
       </label>
     </div>
   `).join("");
-}
-
-function refresh() {
-  renderJobs("job-list");
-  renderJobs("all-jobs");
-  renderGoals("goal-list");
-  renderGoals("all-goals");
-
-  const count = completed.length;
-  document.getElementById("goal-count").textContent = `${count} / ${goals.length}`;
-  document.getElementById("goal-progress").textContent =
-    `${Math.round(count / goals.length * 100)}% erledigt`;
-
-  document.querySelectorAll("[data-goal]").forEach(input => {
-    input.addEventListener("change", () => {
-      const id = input.dataset.goal;
-      completed = input.checked
-        ? [...new Set([...completed, id])]
-        : completed.filter(item => item !== id);
-      localStorage.setItem("ffxi_demo_goals", JSON.stringify(completed));
-      refresh();
-    });
-  });
 }
 
 document.querySelectorAll("[data-page]").forEach(button => {
@@ -491,7 +447,6 @@ document.getElementById("reset").addEventListener("click", () => {
   }
 });
 
-refresh();
 </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="equipment-data.js"></script>
