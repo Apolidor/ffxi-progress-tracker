@@ -377,3 +377,40 @@ selectCharacter = function(id) {
 };
 
 injectCollectionStyles();
+
+function initCollectionNavigation() {
+  const toggle = document.getElementById("collection-menu-toggle");
+  const submenu = document.getElementById("collection-submenu");
+  const arrow = document.getElementById("collection-menu-arrow");
+
+  if (!toggle || !submenu || toggle.dataset.initialized) return;
+
+  toggle.dataset.initialized = "true";
+
+  toggle.addEventListener("click", () => {
+    submenu.classList.toggle("open");
+
+    if (arrow) {
+      arrow.textContent = submenu.classList.contains("open") ? "▴" : "▾";
+    }
+  });
+
+  submenu.querySelectorAll("[data-collection-type]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedCollectionType = button.dataset.collectionType;
+
+      submenu.querySelectorAll("button").forEach(item => {
+        item.classList.toggle("active", item === button);
+      });
+
+      submenu.classList.add("open");
+
+      if (arrow) arrow.textContent = "▴";
+
+      showPage("collection");
+      renderCollection();
+    });
+  });
+}
+
+initCollectionNavigation();
