@@ -196,7 +196,20 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       </button>
       <div id="weapons-submenu" class="equipment-submenu"></div>
       <button class="nav" data-page="goals">☑ Ziele & Erfolge</button>
-      <button class="nav" data-page="collection">✧ Sammlung</button>
+      <div class="nav-group">
+      <button type="button" class="nav" id="collection-menu-toggle">
+        ✧ Sammlung <span id="collection-menu-arrow">▾</span>
+      </button>
+    
+      <div class="nav-submenu" id="collection-submenu">
+        <button type="button" data-collection-type="trust">
+          Trusts
+        </button>
+        <button type="button" data-collection-type="mount">
+          Mounts
+        </button>
+      </div>
+    </div>
     </div>
     <div class="nav-label">SYSTEM</div>
     <button class="nav" id="reset">↻ Beispieldaten zurücksetzen</button>
@@ -331,21 +344,7 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
         <p>Verwalte deine freigeschalteten Trusts und Mounts.</p>
       </div>
     
-      <div class="card">
-        <div class="collection-tabs">
-          <button class="action active"
-            data-collection-tab="trust"
-            onclick="setCollectionType('trust')">
-            Trusts
-          </button>
-    
-          <button class="action"
-            data-collection-tab="mount"
-            onclick="setCollectionType('mount')">
-            Mounts
-          </button>
-        </div>
-    
+      <div class="card">   
         <div id="collection-content">
           <p>Loading collection...</p>
         </div>
