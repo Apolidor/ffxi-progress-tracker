@@ -734,11 +734,6 @@ function renderEquipment() {
                                   ? displayedItem.name
                                   : group.baseName}
                               </span>
-
-                              <small>
-                                ${jobCodesForButton.replace(/,/g, " · ")}
-                                · ${statusText}
-                              </small>
                             </button>
                           `;
                         }).join("")
@@ -1013,34 +1008,36 @@ function injectEquipmentStyles() {
 
     .equipment-row-item {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      justify-content: center;
-      gap: 5px;
-      min-height: 85px;
-      padding: 8px 4px;
+      justify-content: flex-start;
+      gap: 10px;
+      min-height: 64px;
+      padding: 8px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--bg);
       color: var(--text);
       cursor: pointer;
-      text-align: center;
+      text-align: left;
     }
-
+    
     .equipment-row-item:hover {
       border-color: var(--accent);
       background: var(--panel2);
     }
-
+    
     .equipment-row-item img {
-      width: 32px;
-      height: 32px;
+      width: 48px;
+      height: 48px;
       object-fit: contain;
+      flex-shrink: 0;
     }
-
+    
     .equipment-row-item span {
-      font-size: 11px;
+      font-size: 12px;
       overflow-wrap: anywhere;
+      text-align: left;
     }
 
     .equipment-row-item small {
