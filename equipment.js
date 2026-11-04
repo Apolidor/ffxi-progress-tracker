@@ -537,44 +537,9 @@ function getEquipmentProgressValue(job, origin, group) {
 
 // Ermittelt den eigentlichen Namen eines Rüstungssets.
 function getEquipmentSetName(itemName) {
-  const name = getEquipmentBaseName(itemName);
+  const name = getEquipmentBaseName(itemName).trim();
 
-  const armorPieces = [
-    // Kopf
-    "Mask", "Crown", "Helm", "Cap", "Hat", "Circlet",
-    "Coronet", "Bandeau", "Headgear", "Headband",
-    "Hairpin", "Hachimaki", "Kabuto", "Armet",
-    "Burgonet", "Barbut", "Sallet", "Celata",
-    "Visor", "Galea", "Coif", "Bonnet", "Beret",
-    "Chapeau", "Hood", "Wig", "Tiara",
-
-    // Körper
-    "Cuirass", "Mail", "Vest", "Harness", "Hauberk",
-    "Gambison", "Doublet", "Robe", "Cloak", "Jubbah",
-    "Gown", "Gilet", "Aketon", "Shirt", "Tunic",
-    "Briault", "Tabard", "Surcoat", "Plackart",
-
-    // Hände
-    "Gloves", "Gauntlets", "Mitts", "Cuffs",
-    "Bracers", "Manopolas", "Bangles", "Tekko",
-
-    // Beine und Füße
-    "Sollerets", "Greaves", "Sabatons", "Boots",
-    "Gaiters", "Leggings", "Spats", "Hose",
-    "Cuisses", "Trousers", "Slops", "Breeches",
-    "Pantaloons", "Chausses", "Shinguards"
-  ];
-
-  for (const piece of armorPieces) {
-    const suffix = new RegExp(`\\s+${piece}$`, "i");
-
-    if (suffix.test(name)) {
-      return name.replace(suffix, "").trim();
-    }
-  }
-
-  // Falls kein bekanntes Rüstungsteil erkannt wird:
-  // den ersten Namensteil als Setnamen verwenden.
+  // Der erste Bestandteil des Itemnamens ist der Setname.
   return name.split(/\s+/)[0];
 }
 
@@ -622,7 +587,7 @@ function renderEquipment() {
   const title = document.querySelector("#equipment h1");
   if (title) title.textContent = selectedEquipmentOrigin;
 
-  // Rüstungssets nach ihrem Namen gruppieren.
+  // Sets anhand des ersten Wortes gruppieren.
   const sets = {};
 
   availableJobs.forEach(job => {
@@ -657,7 +622,7 @@ function renderEquipment() {
       <div class="equipment-job-table">
 
         <div class="equipment-table-header">
-          <div class="equipment-job-heading">Set</div>
+          <div>Set</div>
           ${slots.map(slot => `
             <div>${slot.name}</div>
           `).join("")}
@@ -676,49 +641,88 @@ function renderEquipment() {
               </div>
 
               ${slots.map(slot => {
-                const slotEntries = [];
+                // Gleiche Items verschiedener Jobs nur einmal sammeln.
+                const uniqueEntries = new Map();
 
                 setJobs.forEach(job => {
-                  const groups = job.groups.filter(
-                    group => group.slotId === slot.id
-                  );
+                  job.groups
+                    .filter(group => group.slotId === slot.id)
+                    .forEach(group => {
+                      if (!uniqueEntries.has(group.key)) {
+                        uniqueEntries.set(group.key, {
+                          group,
+                          jobs: []
+                        });
+                      }
 
-                  groups.forEach(group => {
-                    slotEntries.push({ job, group });
-                  });
+                      uniqueEntries.get(group.key).jobs.push(job);
+                    });
                 });
+
+                const slotEntries = Array.from(uniqueEntries.values());
 
                 return `
                   <div class="equipment-slot-cell">
                     ${slotEntries.length
-                      ? slotEntries.map(({ job, group }) => {
-                          const currentValue = getEquipmentProgressValue(
-                            job.code,
-                            selectedEquipmentOrigin,
-                            group
+                      ? slotEntries.map(({ group, jobs: entryJobs }) => {
+                          const progressValues = entryJobs.map(job =>
+                            getEquipmentProgressValue(
+                              job.code,
+                              selectedEquipmentOrigin,
+                              group
+                            )
                           );
 
+                          const uniqueProgress = [
+                            ...new Set(progressValues)
+                          ];
+
                           const currentItem = group.items.find(
-                            item => String(item.item_id) === currentValue
+                            item =>
+                              String(item.item_id) === progressValues[0]
                           );
+
+                          const anyCurrentItem = entryJobs
+                            .map((job, index) =>
+                              group.items.find(
+                                item =>
+                                  String(item.item_id) === progressValues[index]
+                              )
+                            )
+                            .find(Boolean);
+
+                          const displayedItem = currentItem || anyCurrentItem;
+
+                          const statusText = uniqueProgress.length > 1
+                            ? "Different progress"
+                            : displayedItem
+                              ? "Obtained"
+                              : "Not obtained";
+
+                          const jobCodesForButton = entryJobs
+                            .map(job => job.code)
+                            .join(",");
 
                           return `
                             <button type="button"
                               class="equipment-row-item"
-                              data-job="${job.code}"
+                              data-jobs="${jobCodesForButton}"
                               data-equipment-key="${group.key.replace(/"/g, "&quot;")}">
 
-                              ${currentItem ? `
+                              ${displayedItem ? `
                                 <img
-                                  src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
-                                  alt="${currentItem.name}"
+                                  src="https://static.ffxiah.com/images/icon/${displayedItem.item_id}.png"
+                                  alt="${displayedItem.name}"
                                   loading="lazy"
                                   onerror="this.style.display='none'">
                               ` : `
                                 <div class="equipment-placeholder-icon">
-                                  <svg viewBox="0 0 48 48" width="32" height="32"
-                                       fill="none" stroke="currentColor" stroke-width="2"
-                                       stroke-linecap="round" stroke-linejoin="round">
+                                  <svg viewBox="0 0 48 48"
+                                       fill="none"
+                                       stroke="currentColor"
+                                       stroke-width="2"
+                                       stroke-linecap="round"
+                                       stroke-linejoin="round">
                                     <path d="M16 8h16l8 8v16l-8 8H16l-8-8V16z"/>
                                     <path d="M17 24h14M24 17v14"/>
                                   </svg>
@@ -726,15 +730,14 @@ function renderEquipment() {
                               `}
 
                               <span>
-                                ${currentItem
-                                  ? currentItem.name
+                                ${displayedItem
+                                  ? displayedItem.name
                                   : group.baseName}
                               </span>
 
                               <small>
-                                ${job.code} · ${currentItem
-                                  ? "Obtained"
-                                  : "Not obtained"}
+                                ${jobCodesForButton.replace(/,/g, " · ")}
+                                · ${statusText}
                               </small>
                             </button>
                           `;
@@ -759,38 +762,43 @@ function renderEquipment() {
   container.querySelectorAll(".equipment-row-item")
     .forEach(button => {
       button.addEventListener("click", () => {
-        const job = button.dataset.job;
+        const jobCodes = button.dataset.jobs.split(",");
+        const equipmentKey = button.dataset.equipmentKey;
 
-        const group = jobs
-          .find(item => item.code === job)
-          ?.groups.find(
-            item => item.key === button.dataset.equipmentKey
+        jobCodes.forEach(jobCode => {
+          const job = jobs.find(item => item.code === jobCode);
+          if (!job) return;
+
+          const group = job.groups.find(
+            item => item.key === equipmentKey
           );
 
-        if (!group) return;
+          if (!group) return;
 
-        const currentValue = getEquipmentProgressValue(
-          job,
-          selectedEquipmentOrigin,
-          group
-        );
+          const currentValue = getEquipmentProgressValue(
+            jobCode,
+            selectedEquipmentOrigin,
+            group
+          );
 
-        const options = [
-          "none",
-          ...group.items.map(item => String(item.item_id))
-        ];
+          const options = [
+            "none",
+            ...group.items.map(item => String(item.item_id))
+          ];
 
-        const currentIndex = options.indexOf(currentValue);
-        const nextIndex = (currentIndex + 1) % options.length;
+          const currentIndex = options.indexOf(currentValue);
+          const nextIndex = (currentIndex + 1) % options.length;
 
-        activeCharacter.equipment[job]
-          [selectedEquipmentOrigin][group.key] = options[nextIndex];
+          activeCharacter.equipment[jobCode]
+            [selectedEquipmentOrigin][group.key] = options[nextIndex];
+        });
 
         renderEquipment();
         saveEquipmentSoon();
       });
     });
 }
+
 function saveEquipmentSoon() {
   const status = document.getElementById("equipment-save-status");
 
