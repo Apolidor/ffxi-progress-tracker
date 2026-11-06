@@ -199,8 +199,13 @@ function getEquipmentBaseName(name) {
 function getEquipmentOrigins() {
   if (!equipmentItemsCache) return [];
 
+  const armorSlots = ["head", "body", "hands", "legs", "feet"];
+
   return [...new Set(
     equipmentItemsCache
+      .filter(item =>
+        armorSlots.includes(String(item.itemslot || "").toLowerCase())
+      )
       .map(item => String(item.set || "").trim())
       .filter(Boolean)
   )].sort((a, b) => a.localeCompare(b));
