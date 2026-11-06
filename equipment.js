@@ -132,7 +132,7 @@ async function loadEquipmentItems() {
     while (true) {
       const { data, error } = await db
         .from("equipment")
-        .select("item_id, name, itemslot, item_level, jobs, set, ffxi_url")
+        .select("item_id, name, itemslot, weapon_type, item_level, jobs, stats, set, ffxi_url")
         .range(from, from + pageSize - 1);
 
       if (error) throw error;
@@ -244,7 +244,8 @@ let selectedWeaponSlot = "main";
 const WEAPON_SLOTS = [
   { id: "main", name: "Main Hand" },
   { id: "sub", name: "Off Hand" },
-  { id: "range", name: "Ranged" }
+  { id: "range", name: "Ranged" },
+  { id: "ammo", name: "Ammunition" }
 ];
 
 function getWeaponSlots() {
