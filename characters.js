@@ -283,6 +283,10 @@ async function createCharacter(event) {
 
 function selectCharacter(id) {
   activeCharacter = characters.find(character => character.id === id);
+  
+  weaponCollectionCharacterId = null;
+  weaponCollectionOwned = {};
+  
   if (!activeCharacter) return;
 
   activeCharacter.jobs = normalizeJobProgress(activeCharacter.jobs);
