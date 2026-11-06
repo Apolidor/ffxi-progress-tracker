@@ -631,6 +631,9 @@ function getEquipmentGroups(job, origin) {
   if (!equipmentItemsCache) return [];
 
   const items = equipmentItemsCache.filter(item =>
+    ["head", "body", "hands", "legs", "feet"].includes(
+      String(item.itemslot || "").toLowerCase()
+    ) &&
     Array.isArray(item.jobs) &&
     item.jobs.includes(job) &&
     String(item.set || "").trim() === origin
