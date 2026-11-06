@@ -338,73 +338,73 @@ function initWeaponNavigation() {
   });
 }
 
-function getWeaponGroups(job, setValue) {
-  if (!equipmentItemsCache) return [];
+let weaponCollectionCategory = "all";
+let weaponCollectionOwned = {};
+let weaponCollectionCharacterId = null;
 
-  const items = equipmentItemsCache.filter(item => {
-    const itemSet = String(item.set || "").trim();
-    const itemSlot = String(item.itemslot || "").toLowerCase();
+async function loadWeaponCollection() {
+  if (!activeCharacter) return;
 
-    const matchesSet = itemSet === setValue;
+  const characterId = activeCharacter.id;
 
-    return (
-      Array.isArray(item.jobs) &&
-      item.jobs.includes(job) &&
-      WEAPON_SLOT_IDS.includes(itemSlot) &&
-      matchesSet
-    );
+  const { data, error } = await db
+    .from("character_collection")
+    .select("item_id, owned")
+    .eq("character_id", characterId)
+    .eq("item_type", "equipment");
+
+  if (error) throw error;
+
+  if (activeCharacter?.id !== characterId) return;
+
+  weaponCollectionOwned = {};
+
+  (data || []).forEach(item => {
+    weaponCollectionOwned[String(item.item_id)] = Boolean(item.owned);
   });
 
-  const groups = {};
-
-  items.forEach(item => {
-    const slotId = String(item.itemslot || "").toLowerCase();
-    const baseName = getEquipmentBaseName(item.name);
-    const key = `${slotId}::${baseName.toLowerCase()}`;
-
-    if (!groups[key]) {
-      groups[key] = {
-        key,
-        slot: slotId,
-        slotId,
-        baseName,
-        items: []
-      };
-    }
-
-    groups[key].items.push(item);
-  });
-
-  return Object.values(groups).map(group => {
-    group.items.sort((a, b) => {
-      const getOrder = item => {
-        const match = item.name.trim().match(/\+([1-4])$/);
-        return match ? Number(match[1]) : 0;
-      };
-
-      return getOrder(a) - getOrder(b);
-    });
-
-    return group;
-  }).sort((a, b) => {
-    const slotOrder = WEAPON_SLOT_IDS.indexOf(a.slotId) -
-      WEAPON_SLOT_IDS.indexOf(b.slotId);
-
-    if (slotOrder !== 0) return slotOrder;
-
-    return a.baseName.localeCompare(b.baseName);
-  });
+  weaponCollectionCharacterId = characterId;
 }
 
-function getWeaponProgressValue(job, group) {
-  const itemId = getEquipmentCollectionId(
-    "weapon",
-    job,
-    null,
-    group
+function isWeaponOwned(itemId) {
+  return weaponCollectionOwned[String(itemId)] === true;
+}
+
+async function toggleWeaponOwned(itemId) {
+  if (!activeCharacter || !currentUser) return;
+
+  const characterId = activeCharacter.id;
+  const key = String(itemId);
+  const nextOwned = !isWeaponOwned(key);
+
+  const button = document.querySelector(
+    `[data-weapon-id="${CSS.escape(key)}"]`
   );
 
-  return getCollectionEquipmentValue(itemId);
+  if (button) button.disabled = true;
+
+  const { error } = await db
+    .from("character_collection")
+    .upsert({
+      character_id: characterId,
+      item_type: "equipment",
+      item_id: key,
+      owned: nextOwned,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: "character_id,item_type,item_id"
+    });
+
+  if (error) {
+    alert("Weapon could not be saved: " + error.message);
+    if (button) button.disabled = false;
+    return;
+  }
+
+  if (activeCharacter?.id !== characterId) return;
+
+  weaponCollectionOwned[key] = nextOwned;
+  renderWeapons();
 }
 
 function renderWeapons() {
@@ -412,22 +412,8 @@ function renderWeapons() {
   if (!container || !activeCharacter) return;
 
   if (equipmentItemsCache === null) {
-    container.innerHTML = "<p>Weapons werden geladen ...</p>";
+    container.innerHTML = "<p>Loading weapons...</p>";
     loadEquipmentItems().then(renderWeapons);
-    return;
-  }
-
-  if (equipmentCollectionCharacterId !== activeCharacter.id) {
-    container.innerHTML = "<p>Equipment-Fortschritt wird geladen ...</p>";
-
-    loadEquipmentCollection()
-      .then(renderWeapons)
-      .catch(error => {
-        console.error(error);
-        container.innerHTML =
-          `<p>Fehler beim Laden des Fortschritts: ${error.message}</p>`;
-      });
-
     return;
   }
 
@@ -436,133 +422,127 @@ function renderWeapons() {
   );
 
   if (!selectedSet) {
-    container.innerHTML = "<p>Keine Waffensets gefunden.</p>";
+    container.innerHTML = "<p>No weapon sets found.</p>";
     return;
   }
 
-  const jobs = FFXI_JOBS.map(job => ({
-    ...job,
-    groups: getWeaponGroups(job.code, selectedWeaponSet)
-  }));
+  if (weaponCollectionCharacterId !== activeCharacter.id) {
+    container.innerHTML = "<p>Loading weapon collection...</p>";
 
-  const availableJobs = jobs.filter(job => job.groups.length > 0);
+    loadWeaponCollection()
+      .then(renderWeapons)
+      .catch(error => {
+        console.error(error);
+        container.innerHTML = `<p>Error: ${escapeCollectionText(error.message)}</p>`;
+      });
+
+    return;
+  }
+
+  const items = equipmentItemsCache.filter(item =>
+    WEAPON_SLOT_IDS.includes(
+      String(item.itemslot || "").toLowerCase()
+    ) &&
+    String(item.set || "").trim() === selectedWeaponSet
+  );
+
+  const categories = [...new Set(
+    items.map(item => item.weapon_type || item.itemslot).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b));
+
+  const filteredItems = items.filter(item => {
+    const category = item.weapon_type || item.itemslot;
+
+    return weaponCollectionCategory === "all" ||
+      category === weaponCollectionCategory;
+  });
+
+  const ownedCount = items.filter(item =>
+    isWeaponOwned(item.item_id)
+  ).length;
 
   const title = document.querySelector("#weapons h1");
   if (title) title.textContent = selectedSet.label;
 
-  if (!availableJobs.length) {
-    container.innerHTML = "<p>Für dieses Set wurden keine Waffen gefunden.</p>";
-    return;
-  }
-
   container.innerHTML = `
-    <div class="equipment-table-wrapper">
-      <div class="equipment-job-table">
+    <div class="collection-summary">
+      <strong>${ownedCount} / ${items.length}</strong>
+      <span>Weapons collected</span>
 
-        <div class="equipment-table-header"
-             style="grid-template-columns:110px minmax(0, 1fr)">
-          <div>Job</div>
-          <div>${selectedSet.label}</div>
-        </div>
-
-        ${availableJobs.map(job => `
-          <div class="equipment-job-row"
-               style="grid-template-columns:110px minmax(0, 1fr)">
-
-            <div class="equipment-job-name">
-              <strong>${job.code}</strong>
-              <small>${job.name}</small>
-            </div>
-
-            <div class="equipment-slot-cell">
-              ${job.groups.map(group => {
-                const currentValue = getWeaponProgressValue(job.code, group);
-
-                const currentItem = group.items.find(
-                  item => String(item.item_id) === currentValue
-                );
-
-                return `
-                  <button type="button"
-                    class="equipment-row-item"
-                    data-weapon-job="${job.code}"
-                    data-weapon-key="${group.key.replace(/"/g, "&quot;")}">
-
-                    ${currentItem ? `
-                      <a
-                        href="${currentItem.ffxi_url || '#'}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onclick="event.preventDefault(); event.stopPropagation(); if (this.getAttribute('href') !== '#') window.open(this.href, '_blank', 'noopener,noreferrer')"
-                      >
-                        <img
-                          src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
-                          alt="${currentItem.name}"
-                          loading="lazy"
-                          onerror="this.style.display='none'">
-                      </a>
-                    ` : `
-                      <div class="equipment-placeholder-icon">
-                        <svg viewBox="0 0 48 48" width="32" height="32"
-                             fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M16 8h16l8 8v16l-8 8H16l-8-8V16z"/>
-                          <path d="M17 24h14M24 17v14"/>
-                        </svg>
-                      </div>
-                    `}
-
-                    <span>${currentItem ? currentItem.name : group.baseName}</span>
-                    <small>${currentItem ? "Obtained" : "Not obtained"}</small>
-                  </button>
-                `;
-              }).join("")}
-            </div>
-          </div>
-        `).join("")}
-
+      <div class="track">
+        <div class="fill" style="width:${
+          items.length ? ownedCount / items.length * 100 : 0
+        }%"></div>
       </div>
     </div>
 
-    <div id="weapon-save-status" class="ffxi-save-status" role="status">
-      Ready
+    <div class="collection-category-list">
+      <button class="action"
+        data-weapon-category="all">
+        All
+      </button>
+
+      ${categories.map(category => `
+        <button class="action"
+          data-weapon-category="${escapeCollectionText(category)}">
+          ${escapeCollectionText(category)}
+        </button>
+      `).join("")}
+    </div>
+
+    <div class="collection-grid">
+      ${filteredItems.map(item => {
+        const owned = isWeaponOwned(item.item_id);
+        const category = item.weapon_type || item.itemslot;
+
+        return `
+          <button type="button"
+            class="collection-item ${owned ? "owned" : "not-owned"}"
+            data-weapon-id="${item.item_id}"
+            title="${escapeCollectionText(item.name)}">
+
+            <div class="collection-image">
+              <a
+                href="${escapeCollectionText(item.ffxi_url || "#")}"
+                target="_blank"
+                rel="noopener noreferrer"
+                onclick="event.stopPropagation(); if (this.getAttribute('href') === '#') event.preventDefault()">
+
+                <img
+                  src="https://static.ffxiah.com/images/icon/${item.item_id}.png"
+                  alt="${escapeCollectionText(item.name)}"
+                  loading="lazy"
+                  onerror="this.style.display='none'">
+              </a>
+            </div>
+
+            <strong>${escapeCollectionText(item.name)}</strong>
+
+            <small>${escapeCollectionText(category)}</small>
+
+            <span class="collection-status">
+              ${owned ? "✓ Obtained" : "Not obtained"}
+            </span>
+          </button>
+        `;
+      }).join("")}
     </div>
   `;
 
-  container.querySelectorAll("[data-weapon-job]").forEach(button => {
-    button.addEventListener("click", async () => {
-      const job = button.dataset.weaponJob;
+  container.querySelectorAll("[data-weapon-id]").forEach(button => {
+    button.addEventListener("click", () => {
+      toggleWeaponOwned(button.dataset.weaponId);
+    });
+  });
 
-      const group = getWeaponGroups(job, selectedWeaponSet)
-        .find(item => item.key === button.dataset.weaponKey);
+  container.querySelectorAll("[data-weapon-category]").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.weaponCategory === weaponCollectionCategory
+    );
 
-      if (!group) return;
-
-      const currentValue = getWeaponProgressValue(job, group);
-
-      const options = [
-        "none",
-        ...group.items.map(item => String(item.item_id))
-      ];
-
-      const currentIndex = options.indexOf(currentValue);
-      const nextValue = options[(currentIndex + 1) % options.length];
-
-      const itemId = getEquipmentCollectionId(
-        "weapon",
-        job,
-        null,
-        group
-      );
-
-      await saveEquipmentCollectionItem({
-        itemId,
-        value: nextValue,
-        job,
-        origin: selectedWeaponSet,
-        group,
-        type: "weapon"
-      });
-
+    button.addEventListener("click", () => {
+      weaponCollectionCategory = button.dataset.weaponCategory;
       renderWeapons();
     });
   });
