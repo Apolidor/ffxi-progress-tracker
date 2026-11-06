@@ -1210,3 +1210,4 @@ function injectEquipmentStyles() {
 
   document.head.appendChild(style);
 }
+
