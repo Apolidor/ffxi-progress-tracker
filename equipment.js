@@ -239,49 +239,80 @@ function populateEquipmentSubmenu() {
 }
 
 
-let selectedWeaponSlot = "main";
+let selectedWeaponSet = null;
 
-const WEAPON_SLOTS = [
-  { id: "main", name: "Main Hand" },
-  { id: "sub", name: "Off Hand" },
-  { id: "range", name: "Ranged" },
-  { id: "ammo", name: "Ammunition" }
-];
+const WEAPON_SLOT_IDS = ["main", "sub", "range", "ammo"];
 
-function getWeaponSlots() {
+function getWeaponSets() {
   if (!equipmentItemsCache) return [];
 
-  return WEAPON_SLOTS.filter(slot =>
-    equipmentItemsCache.some(item =>
-      String(item.itemslot || "").toLowerCase() === slot.id
+  const weaponItems = equipmentItemsCache.filter(item =>
+    WEAPON_SLOT_IDS.includes(
+      String(item.itemslot || "").toLowerCase()
     )
   );
+
+  const sets = [
+    ...new Set(
+      weaponItems
+        .map(item => String(item.set || "").trim())
+        .filter(Boolean)
+    )
+  ].sort((a, b) => a.localeCompare(b));
+
+  const result = sets.map(set => ({
+    value: set,
+    label: set
+  }));
+
+  // Waffen ohne Set-Zuordnung bleiben ebenfalls erreichbar.
+  if (weaponItems.some(item => !String(item.set || "").trim())) {
+    result.push({
+      value: "__unassigned__",
+      label: "Nicht zugeordnet"
+    });
+  }
+
+  return result;
 }
 
 function populateWeaponsSubmenu() {
   const submenu = document.getElementById("weapons-submenu");
   if (!submenu) return;
 
-  const slots = getWeaponSlots();
+  const sets = getWeaponSets();
 
-  submenu.innerHTML = slots.map(slot => `
-    <button type="button"
-      data-weapon-slot="${slot.id}"
-      class="${selectedWeaponSlot === slot.id ? "active" : ""}">
-      ${slot.name}
-    </button>
-  `).join("");
+  if (!sets.some(set => set.value === selectedWeaponSet)) {
+    selectedWeaponSet = sets.length ? sets[0].value : null;
+  }
 
-  submenu.querySelectorAll("[data-weapon-slot]").forEach(button => {
+  submenu.innerHTML = "";
+
+  sets.forEach(set => {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.dataset.weaponSet = set.value;
+    button.textContent = set.label;
+
+    if (selectedWeaponSet === set.value) {
+      button.classList.add("active");
+    }
+
     button.addEventListener("click", () => {
-      selectedWeaponSlot = button.dataset.weaponSlot;
+      selectedWeaponSet = set.value;
+
       submenu.classList.add("open");
+
       populateWeaponsSubmenu();
       showPage("weapons");
       renderWeapons();
     });
+
+    submenu.appendChild(button);
   });
 }
+
 function initWeaponNavigation() {
   const toggle = document.getElementById("weapons-menu-toggle");
   const submenu = document.getElementById("weapons-submenu");
@@ -310,25 +341,37 @@ function initWeaponNavigation() {
   });
 }
 
-function getWeaponGroups(job, slot) {
+function getWeaponGroups(job, setValue) {
   if (!equipmentItemsCache) return [];
 
-  const items = equipmentItemsCache.filter(item =>
-    Array.isArray(item.jobs) &&
-    item.jobs.includes(job) &&
-    String(item.itemslot || "").toLowerCase() === slot
-  );
+  const items = equipmentItemsCache.filter(item => {
+    const itemSet = String(item.set || "").trim();
+    const itemSlot = String(item.itemslot || "").toLowerCase();
+
+    const matchesSet = setValue === "__unassigned__"
+      ? !itemSet
+      : itemSet === setValue;
+
+    return (
+      Array.isArray(item.jobs) &&
+      item.jobs.includes(job) &&
+      WEAPON_SLOT_IDS.includes(itemSlot) &&
+      matchesSet
+    );
+  });
 
   const groups = {};
 
   items.forEach(item => {
+    const slotId = String(item.itemslot || "").toLowerCase();
     const baseName = getEquipmentBaseName(item.name);
-    const key = `${slot}::${baseName.toLowerCase()}`;
+    const key = `${slotId}::${baseName.toLowerCase()}`;
 
     if (!groups[key]) {
       groups[key] = {
         key,
-        slot,
+        slot: slotId,
+        slotId,
         baseName,
         items: []
       };
@@ -348,7 +391,14 @@ function getWeaponGroups(job, slot) {
     });
 
     return group;
-  }).sort((a, b) => a.baseName.localeCompare(b.baseName));
+  }).sort((a, b) => {
+    const slotOrder = WEAPON_SLOT_IDS.indexOf(a.slotId) -
+      WEAPON_SLOT_IDS.indexOf(b.slotId);
+
+    if (slotOrder !== 0) return slotOrder;
+
+    return a.baseName.localeCompare(b.baseName);
+  });
 }
 
 function getWeaponProgressValue(job, group) {
@@ -385,41 +435,45 @@ function renderWeapons() {
 
     return;
   }
-  
-  const slot = WEAPON_SLOTS.find(item => item.id === selectedWeaponSlot);
 
-  if (!slot) {
-    container.innerHTML = "<p>Keine Waffenkategorie gefunden.</p>";
+  const selectedSet = getWeaponSets().find(
+    set => set.value === selectedWeaponSet
+  );
+
+  if (!selectedSet) {
+    container.innerHTML = "<p>Keine Waffensets gefunden.</p>";
     return;
   }
 
   const jobs = FFXI_JOBS.map(job => ({
     ...job,
-    groups: getWeaponGroups(job.code, selectedWeaponSlot)
+    groups: getWeaponGroups(job.code, selectedWeaponSet)
   }));
 
   const availableJobs = jobs.filter(job => job.groups.length > 0);
 
   const title = document.querySelector("#weapons h1");
-  if (title) title.textContent = slot.name;
+  if (title) title.textContent = selectedSet.label;
 
   if (!availableJobs.length) {
-    container.innerHTML = "<p>Für diese Kategorie wurden keine Waffen gefunden.</p>";
+    container.innerHTML = "<p>Für dieses Set wurden keine Waffen gefunden.</p>";
     return;
   }
 
   container.innerHTML = `
     <div class="equipment-table-wrapper">
       <div class="equipment-job-table">
+
         <div class="equipment-table-header"
              style="grid-template-columns:110px minmax(0, 1fr)">
           <div>Job</div>
-          <div>${slot.name}</div>
+          <div>${selectedSet.label}</div>
         </div>
 
         ${availableJobs.map(job => `
           <div class="equipment-job-row"
                style="grid-template-columns:110px minmax(0, 1fr)">
+
             <div class="equipment-job-name">
               <strong>${job.code}</strong>
               <small>${job.name}</small>
@@ -428,6 +482,7 @@ function renderWeapons() {
             <div class="equipment-slot-cell">
               ${job.groups.map(group => {
                 const currentValue = getWeaponProgressValue(job.code, group);
+
                 const currentItem = group.items.find(
                   item => String(item.item_id) === currentValue
                 );
@@ -443,7 +498,7 @@ function renderWeapons() {
                         href="${currentItem.ffxi_url || '#'}"
                         target="_blank"
                         rel="noopener noreferrer"
-                        onclick="event.preventDefault(); event.stopPropagation(); if (this.href && this.getAttribute('href') !== '#') window.open(this.href, '_blank', 'noopener,noreferrer')"
+                        onclick="event.preventDefault(); event.stopPropagation(); if (this.getAttribute('href') !== '#') window.open(this.href, '_blank', 'noopener,noreferrer')"
                       >
                         <img
                           src="https://static.ffxiah.com/images/icon/${currentItem.item_id}.png"
@@ -469,8 +524,10 @@ function renderWeapons() {
             </div>
           </div>
         `).join("")}
+
       </div>
     </div>
+
     <div id="weapon-save-status" class="ffxi-save-status" role="status">
       Ready
     </div>
@@ -479,36 +536,38 @@ function renderWeapons() {
   container.querySelectorAll("[data-weapon-job]").forEach(button => {
     button.addEventListener("click", async () => {
       const job = button.dataset.weaponJob;
-      const group = getWeaponGroups(job, selectedWeaponSlot)
+
+      const group = getWeaponGroups(job, selectedWeaponSet)
         .find(item => item.key === button.dataset.weaponKey);
-  
+
       if (!group) return;
-  
+
       const currentValue = getWeaponProgressValue(job, group);
-  
+
       const options = [
         "none",
         ...group.items.map(item => String(item.item_id))
       ];
-  
+
       const currentIndex = options.indexOf(currentValue);
       const nextValue = options[(currentIndex + 1) % options.length];
-  
+
       const itemId = getEquipmentCollectionId(
         "weapon",
         job,
         null,
         group
       );
-  
+
       await saveEquipmentCollectionItem({
         itemId,
         value: nextValue,
         job,
+        origin: selectedWeaponSet,
         group,
         type: "weapon"
       });
-  
+
       renderWeapons();
     });
   });
