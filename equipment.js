@@ -265,14 +265,6 @@ function getWeaponSets() {
     label: set
   }));
 
-  // Waffen ohne Set-Zuordnung bleiben ebenfalls erreichbar.
-  if (weaponItems.some(item => !String(item.set || "").trim())) {
-    result.push({
-      value: "__unassigned__",
-      label: "Nicht zugeordnet"
-    });
-  }
-
   return result;
 }
 
@@ -348,9 +340,7 @@ function getWeaponGroups(job, setValue) {
     const itemSet = String(item.set || "").trim();
     const itemSlot = String(item.itemslot || "").toLowerCase();
 
-    const matchesSet = setValue === "__unassigned__"
-      ? !itemSet
-      : itemSet === setValue;
+    const matchesSet = itemSet === setValue;
 
     return (
       Array.isArray(item.jobs) &&
