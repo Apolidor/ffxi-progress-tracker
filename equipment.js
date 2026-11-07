@@ -650,60 +650,82 @@ function normalizeEquipmentProgress(saved) {
 
   return result;
 }
+
 function getEquipmentGroups(job, origin) {
-  if (!equipmentItemsCache) return [];
-
-  const items = equipmentItemsCache.filter(item =>
-    ["head", "body", "hands", "legs", "feet"].includes(
-      String(item.itemslot || "").toLowerCase()
-    ) &&
-    Array.isArray(item.jobs) &&
-    item.jobs.includes(job) &&
-    String(item.set || "").trim() === origin
-  );
-
-  const groups = {};
-
-  items.forEach(item => {
-    const slotId = String(item.itemslot || "").toLowerCase();
-    const baseName = getEquipmentBaseName(item.name);
-
-    // Gleicher Name und gleicher Slot = eine Kachel
-    const key = `${slotId}::${baseName.toLowerCase()}`;
-
-    if (!groups[key]) {
-      groups[key] = {
-        key,
-        slotId,
-        baseName,
-        items: []
-      };
-    }
-
-    // Jede Item-ID nur einmal übernehmen
-    if (!groups[key].items.some(existing =>
-      String(existing.item_id) === String(item.item_id)
-    )) {
-      groups[key].items.push(item);
-    }
-  });
-
-  return Object.values(groups).map(group => {
-    group.items.sort((a, b) =>
-      (a.item_level || 0) - (b.item_level || 0) ||
-      Number(a.item_id) - Number(b.item_id)
+    if (!equipmentItemsCache) return [];
+  
+    const items = equipmentItemsCache.filter(item =>
+      ["head", "body", "hands", "legs", "feet"].includes(
+        String(item.itemslot || "").toLowerCase()
+      ) &&
+      Array.isArray(item.jobs) &&
+      item.jobs.includes(job) &&
+      String(item.set || "").trim() === origin
     );
+  
+    const groups = {};
+  
+    items.forEach(item => {
+      const slotId = String(item.itemslot || "").toLowerCase();
+      const baseName = getEquipmentBaseName(item.name);
+  
+      const key = `${slotId}::${baseName.toLowerCase()}`;
+  
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          slotId,
+          baseName,
+          items: []
+        };
+      }
+  
+      if (!groups[key].items.some(existing =>
+        String(existing.item_id) === String(item.item_id)
+      )) {
+        groups[key].items.push(item);
+      }
+    });
+  
+    // Upgrade-Stufen in die richtige Reihenfolge bringen
+    function getStageOrder(item) {
+      const stage = getEquipmentStage(item);
+  
+      const order = {
+        "109": 0,
+        "119": 1,
+        "119+1": 2,
+        "119+2": 3,
+        "119+3": 4,
+        "119+4": 5
+      };
+  
+      return order[stage] ?? 99;
+    }
+  
+    return Object.values(groups)
+      .map(group => {
+        group.items.sort((a, b) =>
+          getStageOrder(a) - getStageOrder(b) ||
+          Number(a.item_id) - Number(b.item_id)
+        );
+  
+        return group;
+      })
+      .sort((a, b) => {
+        const slotA = EQUIPMENT_SLOTS.findIndex(
+          slot => slot.id === a.slotId
+        );
+        const slotB = EQUIPMENT_SLOTS.findIndex(
+          slot => slot.id === b.slotId
+        );
+  
+        if (slotA !== slotB) return slotA - slotB;
+  
+        return a.baseName.localeCompare(b.baseName);
+      });
+  }
 
-    return group;
-  }).sort((a, b) => {
-    const slotA = EQUIPMENT_SLOTS.findIndex(slot => slot.id === a.slotId);
-    const slotB = EQUIPMENT_SLOTS.findIndex(slot => slot.id === b.slotId);
-
-    if (slotA !== slotB) return slotA - slotB;
-
-    return a.baseName.localeCompare(b.baseName);
-  });
-}
 
 
 function getEquipmentProgressValue(job, origin, group) {
