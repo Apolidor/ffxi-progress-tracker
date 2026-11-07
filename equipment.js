@@ -481,13 +481,15 @@ function renderWeapons() {
   const ownedCount = displayedItems.filter(item =>
     isWeaponOwned(item.collectionId)
   ).length;
+  
+  const totalCount = displayedItems.length;
 
   const title = document.querySelector("#weapons h1");
   if (title) title.textContent = selectedSet.label;
 
   container.innerHTML = `
     <div class="collection-summary">
-      <strong>${ownedCount} / ${items.length}</strong>
+      <strong>${ownedCount} / ${totalCount}</strong>
       <span>Weapons collected</span>
 
       <div class="track">
