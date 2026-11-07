@@ -955,9 +955,14 @@ function renderEquipment() {
           "none",
           ...group.items.map(item => String(item.item_id))
         ];
+        
+        // Doppelte Item-IDs entfernen
+        const uniqueOptions = [...new Set(options)];
 
-        const currentIndex = options.indexOf(currentValue);
-        const nextValue = options[(currentIndex + 1) % options.length];
+        const currentIndex = uniqueOptions.indexOf(currentValue);
+        const nextValue = uniqueOptions[
+          (currentIndex + 1) % uniqueOptions.length
+        ];
 
         const itemId = getEquipmentCollectionId(
           "armor",
