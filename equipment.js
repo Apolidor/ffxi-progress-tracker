@@ -644,6 +644,8 @@ function getEquipmentGroups(job, origin) {
   items.forEach(item => {
     const slotId = String(item.itemslot || "").toLowerCase();
     const baseName = getEquipmentBaseName(item.name);
+
+    // Gleicher Name und gleicher Slot = eine Kachel
     const key = `${slotId}::${baseName.toLowerCase()}`;
 
     if (!groups[key]) {
@@ -655,18 +657,19 @@ function getEquipmentGroups(job, origin) {
       };
     }
 
-    groups[key].items.push(item);
+    // Jede Item-ID nur einmal übernehmen
+    if (!groups[key].items.some(existing =>
+      String(existing.item_id) === String(item.item_id)
+    )) {
+      groups[key].items.push(item);
+    }
   });
 
   return Object.values(groups).map(group => {
-    group.items.sort((a, b) => {
-      const getOrder = item => {
-        const match = item.name.trim().match(/\+([1-4])$/);
-        return match ? Number(match[1]) : 0;
-      };
-
-      return getOrder(a) - getOrder(b);
-    });
+    group.items.sort((a, b) =>
+      (a.item_level || 0) - (b.item_level || 0) ||
+      Number(a.item_id) - Number(b.item_id)
+    );
 
     return group;
   }).sort((a, b) => {
