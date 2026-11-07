@@ -450,15 +450,36 @@ function renderWeapons() {
     items.map(item => item.weapon_type || item.itemslot).filter(Boolean)
   )].sort((a, b) => a.localeCompare(b));
 
-  const filteredItems = items.filter(item => {
+  // Waffen mit gleichem Namen und Slot zusammenfassen
+  const weaponGroups = new Map();
+  
+  items.forEach(item => {
+    const slot = String(item.itemslot || "").toLowerCase();
+    const name = String(item.name || "").trim();
+    const key = `${slot}::${name.toLowerCase()}`;
+  
+    if (!weaponGroups.has(key)) {
+      weaponGroups.set(key, []);
+    }
+  
+    weaponGroups.get(key).push(item);
+  });
+  
+  const displayedItems = [...weaponGroups.entries()].map(([key, variants]) => ({
+    ...variants[0],
+    variants,
+    collectionId: `weapon:${selectedWeaponSet}:${key}`
+  }));
+  
+  const filteredItems = displayedItems.filter(item => {
     const category = item.weapon_type || item.itemslot;
-
+  
     return weaponCollectionCategory === "all" ||
       category === weaponCollectionCategory;
   });
 
-  const ownedCount = items.filter(item =>
-    isWeaponOwned(item.item_id)
+  const ownedCount = displayedItems.filter(item =>
+    isWeaponOwned(item.collectionId)
   ).length;
 
   const title = document.querySelector("#weapons h1");
@@ -492,13 +513,13 @@ function renderWeapons() {
 
     <div class="collection-grid">
       ${filteredItems.map(item => {
-        const owned = isWeaponOwned(item.item_id);
+        const owned = isWeaponOwned(item.collectionId);
         const category = item.weapon_type || item.itemslot;
 
         return `
           <button type="button"
             class="collection-item ${owned ? "owned" : "not-owned"}"
-            data-weapon-id="${item.item_id}"
+            data-weapon-id="${escapeCollectionText(item.collectionId)}"
             title="${escapeCollectionText(item.name)}">
 
             <div class="collection-image">
