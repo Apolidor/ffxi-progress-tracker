@@ -168,11 +168,6 @@ async function resetLimbusRegion(regionKey) {
   const region = LIMBUS_TOWERS[regionKey];
   if (!region) return;
 
-  if (!confirm(
-    `Möchtest du alle Checkboxen für ${region.name} zurücksetzen?\n\n` +
-    "Der Fortschritt der anderen Region bleibt unverändert."
-  )) return;
-
   const characterId = activeCharacter.id;
 
   const rows = region.towers.map(tower => ({
