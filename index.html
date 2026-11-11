@@ -324,10 +324,17 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
         ⚔ Weapons <span id="weapons-menu-arrow">▾</span>
       </button>
       <div id="weapons-submenu" class="equipment-submenu"></div>
-      <button class="nav" data-page="goals">☑ Ziele & Erfolge</button>
-      <button class="nav limbus-subnav" data-page="limbus">
-        └ ◈ Limbus Checker
+      <button class="nav" id="goals-menu-toggle">
+        ☑ Ziele & Erfolge <span id="goals-menu-arrow">▾</span>
       </button>
+      <div id="goals-submenu" class="equipment-submenu">
+        <button type="button" data-page="goals">
+          Persönliche Checkliste
+        </button>
+        <button type="button" data-page="limbus">
+          Limbus Checker
+        </button>
+      </div>
       <div class="nav-group">
       <button type="button" class="nav" id="collection-menu-toggle">
         ✧ Sammlung <span id="collection-menu-arrow">▾</span>
