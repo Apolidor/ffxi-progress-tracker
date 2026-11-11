@@ -599,6 +599,7 @@ function initEquipmentNavigation() {
   });
 }
 
+
 function defaultEquipmentProgress() {
   const result = {};
 
@@ -1035,6 +1036,27 @@ function renderEquipment() {
 }
 
 initEquipmentNavigation();
+
+function initGoalsNavigation() {
+  const toggle = document.getElementById("goals-menu-toggle");
+  const submenu = document.getElementById("goals-submenu");
+  const arrow = document.getElementById("goals-menu-arrow");
+
+  if (!toggle || !submenu || toggle.dataset.initialized) return;
+
+  toggle.dataset.initialized = "true";
+
+  toggle.addEventListener("click", () => {
+    submenu.classList.toggle("open");
+
+    if (arrow) {
+      arrow.textContent = submenu.classList.contains("open") ? "▴" : "▾";
+    }
+  });
+}
+
+initGoalsNavigation();
+
 function injectEquipmentStyles() {
   if (document.getElementById("ffxi-equipment-styles")) return;
 
