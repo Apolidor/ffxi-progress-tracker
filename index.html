@@ -201,6 +201,99 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
   color: var(--accent);
 }
   
+
+/* Nützliche Links – Bubble-Kacheln */
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+.link-bubble {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  padding: 22px;
+  overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid #34465a;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(121, 224, 208, .16), transparent 42%),
+    linear-gradient(145deg, #1c2938, #141b27 72%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .18);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.link-bubble::after {
+  content: "";
+  position: absolute;
+  width: 115px;
+  height: 115px;
+  right: -42px;
+  bottom: -48px;
+  border: 1px solid rgba(121, 224, 208, .13);
+  border-radius: 50%;
+  box-shadow: 0 0 0 14px rgba(121, 224, 208, .035),
+              0 0 0 29px rgba(121, 224, 208, .025);
+  pointer-events: none;
+}
+.link-bubble:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, .3);
+}
+.link-bubble-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.link-bubble-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  color: var(--accent);
+  background: rgba(121, 224, 208, .11);
+  border: 1px solid rgba(121, 224, 208, .2);
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.link-bubble-arrow {
+  color: var(--muted);
+  font-size: 20px;
+  transition: transform .2s ease, color .2s ease;
+}
+.link-bubble:hover .link-bubble-arrow {
+  color: var(--accent);
+  transform: translate(3px, -3px);
+}
+.link-bubble strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 17px;
+}
+.link-bubble-description {
+  color: var(--muted);
+  font-size: 13px;
+}
+.link-bubble-domain {
+  margin-top: auto;
+  padding-top: 18px;
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: .5px;
+}
+@media (max-width: 650px) {
+  .links-grid { grid-template-columns: 1fr; }
+  .link-bubble { min-height: 165px; }
+}
+
 </style>
 </head>
 <body>
@@ -242,6 +335,7 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       </div>
     </div>
     </div>
+      <button class="nav" data-page="links">✧ Nützliche Links</button>
     <div class="nav-label">SYSTEM</div>
     <button class="nav" id="reset">↻ Beispieldaten zurücksetzen</button>
   </aside>
@@ -365,6 +459,60 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       <div class="card">
         <div class="section-head"><h2>Persönliche Checkliste</h2><span class="tag">Interaktiv</span></div>
         <div id="all-goals"></div>
+      </div>
+    </section>
+
+    <section class="page" id="links">
+      <div class="welcome">
+        <div class="eyebrow">ADVENTURER'S TOOLKIT</div>
+        <h1>Nützliche Links</h1>
+        <p>Praktische Webseiten und Ressourcen für deine Abenteuer in Vana'diel.</p>
+      </div>
+
+      <div class="links-grid">
+        <a class="link-bubble" href="https://vana-portal.com/limbus"
+           target="_blank" rel="noopener noreferrer">
+          <div class="link-bubble-top">
+            <span class="link-bubble-icon">✦</span>
+            <span class="link-bubble-arrow">↗</span>
+          </div>
+          <strong>Vana Portal – Limbus</strong>
+          <span class="link-bubble-description">Informationen und Hilfsmittel rund um Limbus.</span>
+          <span class="link-bubble-domain">VANA-PORTAL.COM</span>
+        </a>
+
+        <a class="link-bubble" href="https://www.bg-wiki.com/ffxi/Main_Page"
+           target="_blank" rel="noopener noreferrer">
+          <div class="link-bubble-top">
+            <span class="link-bubble-icon">BG</span>
+            <span class="link-bubble-arrow">↗</span>
+          </div>
+          <strong>BG Wiki</strong>
+          <span class="link-bubble-description">Guides, Missions, Quests und umfassende FFXI-Datenbank.</span>
+          <span class="link-bubble-domain">BG-WIKI.COM</span>
+        </a>
+
+        <a class="link-bubble" href="https://www.ffxiah.com/"
+           target="_blank" rel="noopener noreferrer">
+          <div class="link-bubble-top">
+            <span class="link-bubble-icon">Gil</span>
+            <span class="link-bubble-arrow">↗</span>
+          </div>
+          <strong>FFXIAH</strong>
+          <span class="link-bubble-description">Auktionshaus-Preise, Item-Informationen und Marktübersicht.</span>
+          <span class="link-bubble-domain">FFXIAH.COM</span>
+        </a>
+
+        <a class="link-bubble" href="https://www.xilogs.com/"
+           target="_blank" rel="noopener noreferrer">
+          <div class="link-bubble-top">
+            <span class="link-bubble-icon">⌁</span>
+            <span class="link-bubble-arrow">↗</span>
+          </div>
+          <strong>XiLogs</strong>
+          <span class="link-bubble-description">Kampflogs und Auswertungen für Final Fantasy XI.</span>
+          <span class="link-bubble-domain">XILOGS.COM</span>
+        </a>
       </div>
     </section>
 
