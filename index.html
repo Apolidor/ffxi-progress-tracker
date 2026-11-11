@@ -294,6 +294,11 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
   .link-bubble { min-height: 165px; }
 }
 
+.limbus-subnav {
+  padding-left: 28px;
+  font-size: 13px;
+}
+
 </style>
 </head>
 <body>
@@ -320,6 +325,9 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       </button>
       <div id="weapons-submenu" class="equipment-submenu"></div>
       <button class="nav" data-page="goals">☑ Ziele & Erfolge</button>
+      <button class="nav limbus-subnav" data-page="limbus">
+        └ ◈ Limbus Checker
+      </button>
       <div class="nav-group">
       <button type="button" class="nav" id="collection-menu-toggle">
         ✧ Sammlung <span id="collection-menu-arrow">▾</span>
@@ -462,6 +470,20 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       </div>
     </section>
 
+    <section class="page" id="limbus">
+      <div class="welcome">
+        <div class="eyebrow">ENDGAME PROGRESS</div>
+        <h1>Limbus Checker</h1>
+        <p>Verfolge, in welchen Limbus-Türmen du bereits eine Kiste geöffnet hast.</p>
+      </div>
+    
+      <div id="limbus-content">
+        <p class="empty">Limbus-Fortschritt wird geladen ...</p>
+      </div>
+    
+      <div id="limbus-status" class="notice" style="display:none"></div>
+    </section>
+
     <section class="page" id="links">
       <div class="welcome">
         <div class="eyebrow">ADVENTURER'S TOOLKIT</div>
@@ -577,6 +599,9 @@ function showPage(id) {
   document.querySelectorAll("[data-page]").forEach(button => {
     button.classList.toggle("active", button.dataset.page === id);
   });
+  if (id === "limbus" && typeof loadLimbusProgress === "function") {
+    loadLimbusProgress();
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -628,6 +653,7 @@ function refresh() {
     <script src="auth.js"></script>
     <script src="equipment.js"></script>
     <script src="characters.js"></script>
+    <script src="limbus.js"></script>
     <script src="collection.js"></script>
 </body>
 </html>
