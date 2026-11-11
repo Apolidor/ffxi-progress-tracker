@@ -323,6 +323,9 @@ function selectCharacter(id) {
 
   renderCharacterJobs();
   renderEquipment();
+  if (typeof loadLimbusProgress === "function") {
+    loadLimbusProgress();
+  }
 }
 
 function renderCharacterManager() {
