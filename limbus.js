@@ -30,43 +30,48 @@ function renderLimbus() {
   const container = document.getElementById("limbus-content");
   if (!container) return;
 
-  container.innerHTML = Object.entries(LIMBUS_TOWERS).map(([key, region]) => {
-    const completed = region.towers.filter(
-      tower => limbusProgress[tower.id] === true
-    ).length;
+  container.innerHTML = `
+    <div class="limbus-grid">
+      ${Object.entries(LIMBUS_TOWERS).map(([key, region]) => {
+        const completed = region.towers.filter(
+          tower => limbusProgress[tower.id] === true
+        ).length;
 
-    return `
-      <div class="card" style="margin-bottom:20px">
-        <div class="section-head">
-          <div>
-            <h2>${region.name}</h2>
-            <span class="stat-label">${region.description}</span>
+        return `
+          <div class="card limbus-card">
+            <div class="section-head">
+              <div>
+                <h2>${region.name}</h2>
+                <span class="stat-label">${region.description}</span>
+              </div>
+              <span class="tag">
+                ${completed} / ${region.towers.length}
+              </span>
+            </div>
+
+            ${region.towers.map(tower => `
+              <div class="goal ${limbusProgress[tower.id] ? "done" : ""}">
+                <input
+                  type="checkbox"
+                  id="limbus-${tower.id}"
+                  data-limbus="${tower.id}"
+                  ${limbusProgress[tower.id] ? "checked" : ""}
+                >
+                <label for="limbus-${tower.id}">
+                  <span>${tower.name}</span>
+                </label>
+              </div>
+            `).join("")}
+
+            <button class="action limbus-reset"
+              data-reset-limbus="${key}">
+              5.000er-Kiste geöffnet – zurücksetzen
+            </button>
           </div>
-          <span class="tag">${completed} / ${region.towers.length} geöffnet</span>
-        </div>
-
-        ${region.towers.map(tower => `
-          <div class="goal ${limbusProgress[tower.id] ? "done" : ""}">
-            <input
-              type="checkbox"
-              id="limbus-${tower.id}"
-              data-limbus="${tower.id}"
-              ${limbusProgress[tower.id] ? "checked" : ""}
-            >
-            <label for="limbus-${tower.id}">
-              <span>${tower.name}</span>
-            </label>
-          </div>
-        `).join("")}
-
-        <div style="margin-top:20px">
-          <button class="action" data-reset-limbus="${key}">
-            5.000er-Kiste geöffnet – ${region.name} zurücksetzen
-          </button>
-        </div>
-      </div>
-    `;
-  }).join("");
+        `;
+      }).join("")}
+    </div>
+  `;
 
   container.querySelectorAll("[data-limbus]").forEach(input => {
     input.addEventListener("change", async () => {
@@ -76,8 +81,7 @@ function renderLimbus() {
 
   container.querySelectorAll("[data-reset-limbus]").forEach(button => {
     button.addEventListener("click", async () => {
-      const regionKey = button.dataset.resetLimbus;
-      await resetLimbusRegion(regionKey);
+      await resetLimbusRegion(button.dataset.resetLimbus);
     });
   });
 }
