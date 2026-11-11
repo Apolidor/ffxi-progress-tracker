@@ -299,6 +299,27 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
   font-size: 13px;
 }
 
+.limbus-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.limbus-card {
+  min-width: 0;
+}
+
+.limbus-reset {
+  width: 100%;
+  margin-top: 16px;
+}
+
+@media (max-width: 700px) {
+  .limbus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+  
 </style>
 </head>
 <body>
