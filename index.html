@@ -718,6 +718,9 @@ function showPage(id) {
   if (id === "limbus" && typeof loadLimbusProgress === "function") {
     loadLimbusProgress();
   }
+  if (id === "routines" && typeof loadRoutineProgress === "function") {
+    loadRoutineProgress();
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -771,5 +774,6 @@ function refresh() {
     <script src="characters.js"></script>
     <script src="limbus.js"></script>
     <script src="collection.js"></script>
+    <script src="routines.js"></script>
 </body>
 </html>
