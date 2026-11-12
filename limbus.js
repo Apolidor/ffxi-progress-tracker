@@ -5,20 +5,19 @@ const LIMBUS_TOWERS = {
     description: "4 Türme",
     towers: [
       { id: "temenos_northern", name: "Northern Tower" },
-      { id: "temenos_eastern", name: "Eastern Tower" },
       { id: "temenos_western", name: "Western Tower" },
-      { id: "temenos_central", name: "Central Tower" }
+      { id: "temenos_eastern", name: "Eastern Tower" },
+      { id: "temenos_central", name: "Central Temenos" }
     ]
   },
   apollyon: {
     name: "Apollyon",
-    description: "5 Türme",
+    description: "4 Türme",
     towers: [
-      { id: "apollyon_northwest", name: "Northwest Tower" },
-      { id: "apollyon_northeast", name: "Northeast Tower" },
-      { id: "apollyon_southwest", name: "Southwest Tower" },
-      { id: "apollyon_southeast", name: "Southeast Tower" },
-      { id: "apollyon_central", name: "Central Tower" }
+      { id: "apollyon_northwest", name: "NW Apollyon" },
+      { id: "apollyon_southwest", name: "SW Apollyon" },
+      { id: "apollyon_northeast", name: "NE Apollyon" },
+      { id: "apollyon_southeast", name: "SE Apollyon" }
     ]
   }
 };
