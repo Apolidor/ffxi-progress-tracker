@@ -130,18 +130,30 @@ function getNextReset(type) {
     const japan = getJapanTime();
 
     let year = japan.getUTCFullYear();
-    let month = japan.getUTCMonth() + 1;
+    let month = japan.getUTCMonth();
 
-    if (month > 11) {
-      month = 0;
-      year++;
-    }
-
-    return japanDateToTimestamp(
+    let reset = japanDateToTimestamp(
       year,
       month,
       getSecondTuesday(year, month)
     );
+
+    if (now >= reset) {
+      month++;
+
+      if (month > 11) {
+        month = 0;
+        year++;
+      }
+
+      reset = japanDateToTimestamp(
+        year,
+        month,
+        getSecondTuesday(year, month)
+      );
+    }
+
+    return reset;
   }
 
   return now;
@@ -356,7 +368,6 @@ function initRoutineTimers() {
   routineTimerInterval = setInterval(() => {
     if (document.getElementById("routines")?.classList.contains("active")) {
       updateRoutineTimers();
-      renderRoutines();
     }
   }, 1000);
 }
