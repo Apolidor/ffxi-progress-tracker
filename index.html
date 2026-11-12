@@ -319,6 +319,69 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
     grid-template-columns: 1fr;
   }
 }
+
+.routine-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.routine-card {
+  min-width: 0;
+}
+
+.routine-timer {
+  color: var(--accent);
+  font-size: 12px;
+  margin-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.routine-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.routine-item:last-child {
+  border-bottom: 0;
+}
+
+.routine-item input {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.routine-item a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.routine-item a:hover {
+  color: var(--accent);
+}
+
+.routine-item.done a {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.routine-reset-label {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+@media (max-width: 1000px) {
+  .routine-grid {
+    grid-template-columns: 1fr;
+  }
+}
   
 </style>
 </head>
@@ -510,6 +573,20 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       </div>
     
       <div id="limbus-status" class="notice" style="display:none"></div>
+    </section>
+
+    <section class="page" id="routines">
+      <div class="welcome">
+        <div class="eyebrow">VANA'DIEL ROUTINES</div>
+        <h1>Daily / Weekly / Monthly</h1>
+        <p>Behalte deine wiederkehrenden Aktivitäten und Resets im Blick.</p>
+      </div>
+    
+      <div id="routines-content">
+        <p class="empty">Aktivitäten werden geladen ...</p>
+      </div>
+    
+      <div id="routines-status" class="notice" style="display:none"></div>
     </section>
 
     <section class="page" id="links">
