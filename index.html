@@ -382,6 +382,80 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
     grid-template-columns: 1fr;
   }
 }
+
+
+.coalition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.coalition-card {
+  min-width: 0;
+}
+
+.coalition-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.coalition-rank {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.coalition-track {
+  height: 12px;
+  background: #293447;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.coalition-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 20px;
+  transition: width .5s ease;
+}
+
+.coalition-card.legend {
+  border-color: #a98642;
+  box-shadow: 0 0 16px rgba(231, 190, 118, .12);
+}
+
+.coalition-card.legend .coalition-fill {
+  background: linear-gradient(
+    90deg,
+    #a87925,
+    #ffe7a0,
+    #d6a33f,
+    #fff0bd
+  );
+  background-size: 200% 100%;
+  animation: coalition-gold 3s linear infinite;
+  box-shadow: 0 0 12px rgba(255, 210, 110, .65);
+}
+
+.coalition-card.legend .coalition-rank {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+@keyframes coalition-gold {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (max-width: 700px) {
+  .coalition-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
   
 </style>
 </head>
@@ -417,6 +491,9 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
         </button>
         <button type="button" data-page="limbus">
           Limbus Checker
+        </button>
+        <button type="button" data-page="coalitions">
+          Coalition Tracker
         </button>
         <button type="button" data-page="routines">
           Daily / Weekly / Monthly
@@ -578,6 +655,36 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       <div id="limbus-status" class="notice" style="display:none"></div>
     </section>
 
+    
+    <section class="page" id="coalitions">
+      <div class="welcome">
+        <div class="eyebrow">SEEKERS OF ADOULIN</div>
+        <h1>Coalition Tracker</h1>
+        <p>Verfolge deinen persönlichen Rang in allen sechs Coalitions.</p>
+      </div>
+    
+      <div class="notice coalition-info">
+        <strong>Wo kannst du deine Ränge nachsehen?</strong>
+        <p>
+          Sprich mit Iyvah Halohm in Eastern Adoulin (G-8)
+          und wähle „What's my coalition rank?“.
+          Sie zeigt dir alle sechs persönlichen Coalition-Ränge
+          auf einmal an.
+        </p>
+        <a href="https://www.bg-wiki.com/ffxi/Category:Coalition_Assignments#Personal_Standing"
+           target="_blank" rel="noopener noreferrer">
+          BG Wiki – Personal Standing ↗
+        </a>
+      </div>
+    
+      <div id="coalitions-content">
+        <p class="empty">Coalition-Fortschritt wird geladen ...</p>
+      </div>
+    
+      <div id="coalitions-status" class="notice" style="display:none"></div>
+    </section>
+
+
     <section class="page" id="routines">
       <div class="welcome">
         <div class="eyebrow">VANA'DIEL ROUTINES</div>
@@ -723,6 +830,9 @@ function showPage(id) {
   }
   if (id === "routines" && typeof loadRoutineProgress === "function") {
     loadRoutineProgress();
+  }
+  if (id === "coalitions" && typeof loadCoalitionProgress === "function") {
+    loadCoalitionProgress();
   }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
