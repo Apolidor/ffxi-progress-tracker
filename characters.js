@@ -323,8 +323,23 @@ function selectCharacter(id) {
 
   renderCharacterJobs();
   renderEquipment();
+  
   if (typeof loadLimbusProgress === "function") {
     loadLimbusProgress();
+  }
+  
+  if (
+    document.getElementById("coalitions")?.classList.contains("active") &&
+    typeof loadCoalitionProgress === "function"
+  ) {
+    loadCoalitionProgress();
+  }
+  
+  if (
+    document.getElementById("routines")?.classList.contains("active") &&
+    typeof loadRoutineProgress === "function"
+  ) {
+    loadRoutineProgress();
   }
 }
 
