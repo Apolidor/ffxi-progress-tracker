@@ -456,6 +456,101 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
   }
 }
 
+
+.coalition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.coalition-card {
+  min-width: 0;
+}
+
+.coalition-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.coalition-rank {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.coalition-track {
+  height: 12px;
+  background: #293447;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.coalition-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 20px;
+  transition: width .5s ease;
+}
+
+.coalition-select-label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.coalition-select {
+  width: 100%;
+}
+
+.coalition-card.legend {
+  border-color: #a98642;
+  box-shadow: 0 0 16px rgba(231, 190, 118, .12);
+}
+
+.coalition-card.legend .coalition-fill {
+  background: linear-gradient(
+    90deg,
+    #a87925,
+    #ffe7a0,
+    #d6a33f,
+    #fff0bd
+  );
+  background-size: 200% 100%;
+  animation: coalition-gold 3s linear infinite;
+  box-shadow: 0 0 12px rgba(255, 210, 110, .65);
+}
+
+.coalition-card.legend .coalition-rank {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.coalition-legend-label {
+  margin-top: 12px;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+@keyframes coalition-gold {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (max-width: 700px) {
+  .coalition-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
   
 </style>
 </head>
@@ -888,5 +983,6 @@ function refresh() {
     <script src="limbus.js"></script>
     <script src="collection.js"></script>
     <script src="routines.js"></script>
+    <script src="coalitions.js"></script>
 </body>
 </html>
