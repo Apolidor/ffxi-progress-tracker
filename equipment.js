@@ -407,7 +407,43 @@ async function toggleWeaponOwned(itemId) {
   ();
 }
 
+function injectWeaponStyles() {
+  if (document.getElementById("ffxi-weapon-styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "ffxi-weapon-styles";
+
+  style.textContent = `
+    #weapon-list .collection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    #weapon-list .weapon-card {
+      padding: 14px;
+      min-height: 190px;
+    }
+
+    #weapon-list .weapon-card-image {
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #weapon-list .weapon-card-image img {
+      width: 88px;
+      height: 88px;
+      object-fit: contain;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
 function renderWeapons() {
+  injectWeaponStyles();
   const container = document.getElementById("weapon-list");
   if (!container || !activeCharacter) return;
 
@@ -490,32 +526,17 @@ function renderWeapons() {
       </div>
     </div>
 
-    <div class="collection-category-list">
-      <button class="action"
-        data-weapon-category="all">
-        All
-      </button>
-
-      ${categories.map(category => `
-        <button class="action"
-          data-weapon-category="${escapeCollectionText(category)}">
-          ${escapeCollectionText(category)}
-        </button>
-      `).join("")}
-    </div>
-
     <div class="collection-grid">
       ${filteredItems.map(item => {
         const owned = isWeaponOwned(item.collectionId);
-        const category = item.weapon_type || item.itemslot;
 
         return `
           <button type="button"
-            class="collection-item ${owned ? "owned" : "not-owned"}"
+            class="collection-item weapon-card ${owned ? "owned" : "not-owned"}"
             data-weapon-id="${escapeCollectionText(item.collectionId)}"
             title="${escapeCollectionText(item.name)}">
 
-            <div class="collection-image">
+            <div class="collection-image weapon-card-image">
               <a
                 href="${escapeCollectionText(item.ffxi_url || "#")}"
                 target="_blank"
@@ -532,8 +553,6 @@ function renderWeapons() {
 
             <strong>${escapeCollectionText(item.name)}</strong>
 
-            <small>${escapeCollectionText(category)}</small>
-
             <span class="collection-status">
               ${owned ? "✓ Obtained" : "Not obtained"}
             </span>
@@ -549,15 +568,6 @@ function renderWeapons() {
     });
   });
 
-  container.querySelectorAll("[data-weapon-category]").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.weaponCategory === weaponCollectionCategory
-    );
-
-    button.addEventListener("click", () => {
-      weaponCollectionCategory = button.dataset.weaponCategory;
-      renderWeapons();
     });
   });
 }
