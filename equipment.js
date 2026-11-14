@@ -303,7 +303,7 @@ function populateWeaponsSubmenu() {
 
       populateWeaponsSubmenu();
       showPage("weapons");
-      ();
+      renderWeapons();
     });
 
     submenu.appendChild(button);
@@ -329,11 +329,11 @@ function initWeaponNavigation() {
     if (equipmentItemsCache === null) {
       loadEquipmentItems().then(() => {
         populateWeaponsSubmenu();
-        ();
+        renderWeapons();
       });
     } else {
       populateWeaponsSubmenu();
-      ();
+      renderWeapons();
     }
   });
 }
@@ -404,7 +404,7 @@ async function toggleWeaponOwned(itemId) {
   if (activeCharacter?.id !== characterId) return;
 
   weaponCollectionOwned[key] = nextOwned;
-  ();
+  renderWeapons();
 }
 
 function injectWeaponStyles() {
@@ -565,9 +565,6 @@ function renderWeapons() {
   container.querySelectorAll("[data-weapon-id]").forEach(button => {
     button.addEventListener("click", () => {
       toggleWeaponOwned(button.dataset.weaponId);
-    });
-  });
-
     });
   });
 }
