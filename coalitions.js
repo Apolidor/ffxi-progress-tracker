@@ -39,9 +39,6 @@ function renderCoalitions() {
             <div class="coalition-card-top">
               <div>
                 <h2>${coalition.name}</h2>
-                <div class="coalition-rank">
-                  ${COALITION_RANKS[rank]}
-                </div>
               </div>
               <span class="tag">${rank} / 7</span>
             </div>
@@ -52,10 +49,6 @@ function renderCoalitions() {
                 style="width: ${percentage}%"
               ></div>
             </div>
-
-            <label class="coalition-select-label">
-              Persönlicher Rang
-            </label>
 
             <select
               data-coalition="${coalition.id}"
