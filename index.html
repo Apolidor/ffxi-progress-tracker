@@ -550,7 +550,75 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
   }
 }
 
+.adoulin-heading {
+  margin: 30px 0 15px;
+}
 
+.adoulin-overview,
+.adoulin-group-card {
+  margin-top: 18px;
+}
+
+.adoulin-main-track {
+  margin: 12px 0;
+}
+
+.adoulin-muted {
+  font-size: 12px;
+}
+
+.adoulin-section {
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+}
+
+.adoulin-section-summary,
+.adoulin-rank-group > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.adoulin-section-summary::-webkit-details-marker,
+.adoulin-rank-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.adoulin-section-summary small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.adoulin-nested {
+  padding-left: 12px;
+}
+
+.adoulin-rank-group {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.adoulin-rank-group > summary {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.adoulin-checklist {
+  padding-left: 8px;
+}
+
+.adoulin-check {
+  margin: 0;
+}
+
+.adoulin-check input {
+  flex-shrink: 0;
+}
   
 </style>
 </head>
@@ -588,7 +656,7 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
           Limbus Checker
         </button>
         <button type="button" data-page="coalitions">
-          Coalition Tracker
+          Adoulin Tracker
         </button>
         <button type="button" data-page="routines">
           Daily / Weekly / Monthly
@@ -754,21 +822,20 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
     <section class="page" id="coalitions">
       <div class="welcome">
         <div class="eyebrow">SEEKERS OF ADOULIN</div>
-        <h1>Coalition Tracker</h1>
-        <p>Verfolge deinen persönlichen Rang in allen sechs Coalitions.</p>
+        <h1>Adoulin Tracker</h1>
+        <p>Verfolge deinen Fortschritt auf dem Weg zum Golden Shovel Cordon.</p>
       </div>
     
       <div class="notice coalition-info">
-        <strong>Wo kannst du deine Ränge nachsehen?</strong>
+        <strong>Golden Shovel Cordon</strong>
         <p>
-          Sprich mit Iyvah Halohm in Eastern Adoulin (G-8)
-          und wähle „What's my coalition rank?“.
-          Sie zeigt dir alle sechs persönlichen Coalition-Ränge
-          auf einmal an.
+          Erfülle alle erforderlichen Coalition Assignments,
+          Adoulin-Quests, Mog-Garden-Quests und Wildskeeper-Reives.
+          Hier kannst du jeden einzelnen Fortschritt abhaken.
         </p>
-        <a href="https://www.bg-wiki.com/ffxi/Category:Coalition_Assignments#Personal_Standing"
+        <a href="https://www.bg-wiki.com/ffxi/Golden_shovel_cordon"
            target="_blank" rel="noopener noreferrer">
-          BG Wiki – Personal Standing ↗
+          BG Wiki – Golden Shovel Cordon ↗
         </a>
       </div>
     
