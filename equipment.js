@@ -303,7 +303,7 @@ function populateWeaponsSubmenu() {
 
       populateWeaponsSubmenu();
       showPage("weapons");
-      renderWeapons();
+      ();
     });
 
     submenu.appendChild(button);
@@ -329,11 +329,11 @@ function initWeaponNavigation() {
     if (equipmentItemsCache === null) {
       loadEquipmentItems().then(() => {
         populateWeaponsSubmenu();
-        renderWeapons();
+        ();
       });
     } else {
       populateWeaponsSubmenu();
-      renderWeapons();
+      ();
     }
   });
 }
@@ -404,7 +404,7 @@ async function toggleWeaponOwned(itemId) {
   if (activeCharacter?.id !== characterId) return;
 
   weaponCollectionOwned[key] = nextOwned;
-  renderWeapons();
+  ();
 }
 
 function renderWeapons() {
@@ -446,10 +446,6 @@ function renderWeapons() {
     String(item.set || "").trim() === selectedWeaponSet
   );
 
-  const categories = [...new Set(
-    items.map(item => item.weapon_type || item.itemslot).filter(Boolean)
-  )].sort((a, b) => a.localeCompare(b));
-
   // Waffen mit gleichem Namen und Slot zusammenfassen
   const weaponGroups = new Map();
   
@@ -471,12 +467,7 @@ function renderWeapons() {
     collectionId: `weapon:${selectedWeaponSet}:${key}`
   }));
   
-  const filteredItems = displayedItems.filter(item => {
-    const category = item.weapon_type || item.itemslot;
-  
-    return weaponCollectionCategory === "all" ||
-      category === weaponCollectionCategory;
-  });
+  const filteredItems = displayedItems;
 
   const ownedCount = displayedItems.filter(item =>
     isWeaponOwned(item.collectionId)
