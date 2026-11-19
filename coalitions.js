@@ -357,9 +357,10 @@ function renderAdoulinChecklist(title, type, items, group = "") {
   });
 
   const stats = getAdoulinStats(entries);
+  const panelId = `${type}:${group}:${title}`;
 
   return `
-    <details class="adoulin-section">
+    <details class="adoulin-section" data-panel-id="${adoulinEscape(panelId)}">
       <summary class="adoulin-section-summary">
         <span>
           <strong>${adoulinEscape(title)}</strong>
@@ -449,7 +450,7 @@ function renderCoalitionAssignments() {
     }).join("");
 
     return `
-      <details class="adoulin-group-card">
+      <details class="adoulin-group-card" data-panel-id="coalition-group:${coalitionId}">
         <summary class="adoulin-section-summary">
           <strong>${adoulinEscape(coalition?.name || coalitionId)}</strong>
         </summary>
@@ -509,6 +510,11 @@ function renderAdoulinOverview() {
 function renderCoalitions() {
   const container = document.getElementById("coalitions-content");
   if (!container) return;
+  const openPanels = new Set(
+    [...container.querySelectorAll("details[open]")]
+      .map(details => details.dataset.panelId)
+      .filter(Boolean)
+  );
 
   const stats = renderAdoulinOverview();
 
@@ -561,6 +567,11 @@ function renderCoalitions() {
       REJA_REWARDS
     )}
   `;
+  container.querySelectorAll("details[data-panel-id]").forEach(details => {
+  if (openPanels.has(details.dataset.panelId)) {
+    details.open = true;
+  }
+});
 }
 async function loadCoalitionProgress() {
   const container = document.getElementById("coalitions-content");
