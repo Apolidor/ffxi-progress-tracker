@@ -619,6 +619,136 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
 .adoulin-check input {
   flex-shrink: 0;
 }
+
+
+/* Adoulin Tracker – aufklappbare Bereiche */
+
+.adoulin-section,
+.adoulin-group-card {
+  margin: 10px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.adoulin-section-summary,
+.adoulin-group-card > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 16px;
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.2s ease;
+}
+
+.adoulin-section-summary:hover,
+.adoulin-group-card > summary:hover {
+  background: var(--panel2);
+}
+
+.adoulin-section-summary::-webkit-details-marker,
+.adoulin-group-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.adoulin-section-summary::after,
+.adoulin-group-card > summary::after {
+  content: "+";
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.adoulin-section[open] > summary::after,
+.adoulin-group-card[open] > summary::after {
+  content: "−";
+}
+
+.adoulin-section-summary strong {
+  display: block;
+}
+
+.adoulin-section-summary small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.adoulin-nested {
+  padding: 0 12px 12px;
+}
+
+.adoulin-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+  padding: 12px;
+}
+
+/* Einzelne Checkbox-Einträge */
+
+.adoulin-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 9px 12px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel2);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.adoulin-check:hover {
+  border-color: var(--accent);
+  background: var(--panel);
+}
+
+.adoulin-check input {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.adoulin-check:has(input:checked) {
+  opacity: 0.7;
+}
+
+.adoulin-check:has(input:checked) span {
+  text-decoration: line-through;
+}
+
+.adoulin-heading {
+  margin: 30px 0 14px;
+}
+
+.adoulin-overview {
+  margin-top: 18px;
+}
+
+.adoulin-main-track {
+  margin: 12px 0;
+}
+
+@media (max-width: 600px) {
+  .adoulin-checklist {
+    grid-template-columns: 1fr;
+  }
+}
+
   
 </style>
 </head>
