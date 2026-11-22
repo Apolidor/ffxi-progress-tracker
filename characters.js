@@ -441,22 +441,191 @@ function injectJobStyles() {
       transition: border-color .25s, box-shadow .25s;
     }
 
-    /* Bronze: Level 99 */
+        /* Basis für die Effekt-Rahmen */
+    .ffxi-job-card {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      transition:
+        transform .3s ease,
+        box-shadow .3s ease,
+        border-color .3s ease;
+    }
+
+    .ffxi-job-card > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .ffxi-job-card:hover {
+      transform: translateY(-3px);
+    }
+
+    /* Rangabzeichen */
+    .ffxi-job-rank {
+      margin-left: auto;
+      align-self: center;
+      white-space: nowrap;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 5px 8px;
+      border-radius: 5px;
+      animation: rank-appear .4s ease-out;
+    }
+
+    @keyframes rank-appear {
+      from { opacity: 0; transform: scale(.7); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Gemeinsamer Lichtreflex */
+    .ffxi-job-card.mastery-bronze::after,
+    .ffxi-job-card.mastery-silver::after,
+    .ffxi-job-card.mastery-gold::after {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      top: -80%;
+      left: -70%;
+      width: 45%;
+      height: 260%;
+      transform: rotate(25deg);
+      pointer-events: none;
+      animation: job-card-shine 7s ease-in-out infinite;
+    }
+
+    @keyframes job-card-shine {
+      0%, 65% { left: -70%; opacity: 0; }
+      72% { opacity: .7; }
+      90%, 100% { left: 140%; opacity: 0; }
+    }
+
+    /* BRONZE */
     .ffxi-job-card.mastery-bronze {
       border: 1px solid #cd7f32;
-      box-shadow: 0 0 8px rgba(205, 127, 50, 0.22);
+      background:
+        linear-gradient(145deg, rgba(205,127,50,.13), transparent 55%),
+        linear-gradient(var(--panel), var(--panel)) padding-box,
+        linear-gradient(135deg, #70401e, #f2b36d, #9b5728, #e6a05b) border-box;
+      box-shadow:
+        0 0 8px rgba(205,127,50,.25),
+        inset 0 0 18px rgba(205,127,50,.08);
     }
 
-    /* Silber: 2100 Job Points */
+    .ffxi-job-card.mastery-bronze:hover {
+      box-shadow:
+        0 0 18px rgba(205,127,50,.45),
+        0 0 35px rgba(205,127,50,.15),
+        inset 0 0 22px rgba(205,127,50,.12);
+    }
+
+    .mastery-bronze::after {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,210,155,.4),
+        transparent
+      );
+    }
+
+    .mastery-bronze .ffxi-job-rank {
+      color: #ffd09a;
+      background: linear-gradient(135deg, #663b20, #b87333, #75421f);
+      border: 1px solid #d99a5b;
+      box-shadow: 0 0 9px rgba(205,127,50,.3);
+    }
+
+    /* SILBER */
     .ffxi-job-card.mastery-silver {
       border: 1px solid #c0c0c0;
-      box-shadow: 0 0 10px rgba(192, 192, 192, 0.28);
+      background:
+        linear-gradient(145deg, rgba(210,220,235,.14), transparent 55%),
+        linear-gradient(var(--panel), var(--panel)) padding-box,
+        linear-gradient(135deg, #626c7a, #ffffff, #9ca9b8, #e4eaf2) border-box;
+      box-shadow:
+        0 0 10px rgba(192,205,220,.3),
+        inset 0 0 20px rgba(210,220,235,.08);
     }
 
-    /* Gold: Master Level 50 */
+    .ffxi-job-card.mastery-silver:hover {
+      box-shadow:
+        0 0 22px rgba(210,225,245,.5),
+        0 0 42px rgba(192,205,220,.18),
+        inset 0 0 25px rgba(210,220,235,.13);
+    }
+
+    .mastery-silver::after {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.65),
+        transparent
+      );
+    }
+
+    .mastery-silver .ffxi-job-rank {
+      color: #fff;
+      background: linear-gradient(135deg, #626c7a, #cbd4df, #707d8c);
+      border: 1px solid #e7edf5;
+      box-shadow: 0 0 12px rgba(210,225,245,.35);
+      text-shadow: 0 1px 3px #414b59;
+    }
+
+    /* GOLD */
     .ffxi-job-card.mastery-gold {
       border: 1px solid #ffd700;
-      box-shadow: 0 0 12px rgba(255, 215, 0, 0.32);
+      background:
+        linear-gradient(145deg, rgba(255,190,0,.19), transparent 60%),
+        linear-gradient(var(--panel), var(--panel)) padding-box,
+        linear-gradient(135deg, #8a6410, #fff1a6, #e4a900, #fff4c2, #a87508) border-box;
+      box-shadow:
+        0 0 12px rgba(255,190,0,.4),
+        0 0 28px rgba(255,190,0,.15),
+        inset 0 0 22px rgba(255,215,0,.1);
+      animation: gold-aura 4s ease-in-out infinite;
+    }
+
+    .ffxi-job-card.mastery-gold:hover {
+      box-shadow:
+        0 0 22px rgba(255,215,0,.65),
+        0 0 50px rgba(255,190,0,.28),
+        inset 0 0 30px rgba(255,215,0,.16);
+    }
+
+    @keyframes gold-aura {
+      0%, 100% {
+        box-shadow:
+          0 0 12px rgba(255,190,0,.35),
+          0 0 25px rgba(255,190,0,.12),
+          inset 0 0 18px rgba(255,215,0,.08);
+      }
+      50% {
+        box-shadow:
+          0 0 18px rgba(255,215,0,.55),
+          0 0 38px rgba(255,190,0,.23),
+          inset 0 0 25px rgba(255,215,0,.14);
+      }
+    }
+
+    .mastery-gold::after {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,245,180,.8),
+        transparent
+      );
+      animation-duration: 5s;
+    }
+
+    .mastery-gold .ffxi-job-rank {
+      color: #fff6c5;
+      background: linear-gradient(135deg, #765000, #e4b323, #8e6200);
+      border: 1px solid #ffe58a;
+      box-shadow:
+        0 0 10px rgba(255,215,0,.5),
+        inset 0 0 7px rgba(255,255,255,.2);
+      text-shadow: 0 1px 3px #664600;
     }
 
     .ffxi-job-fields {
@@ -647,22 +816,28 @@ function renderJobCard(job, progress) {
   const mastered = progress.jp >= 2100;
 
   let tier = "";
+  let rank = "";
+
   if (progress.masterLevel >= 50) {
     tier = "mastery-gold";
+    rank = "✦ MASTER 50";
   } else if (progress.jp >= 2100) {
     tier = "mastery-silver";
+    rank = "★★★ JOB MASTER";
   } else if (progress.level >= 99) {
     tier = "mastery-bronze";
+    rank = "LEVEL 99";
   }
 
   return `
     <div class="ffxi-job-card ${tier}" data-job-card="${job.code}">
       <div class="ffxi-job-card-head">
         <div class="ffxi-job-card-icon">${job.icon}</div>
-        <div>
+        <div class="ffxi-job-title">
           <h3>${job.name}</h3>
           <small>${job.code}</small>
         </div>
+        ${rank ? `<div class="ffxi-job-rank">${rank}</div>` : ""}
       </div>
 
       <div class="ffxi-job-fields">
@@ -712,16 +887,21 @@ function updateJobCardPreview(event) {
 
   if (!card) return;
 
-  const levelInput = card.querySelector('[data-job-field="level"]');
-  const jpInput = card.querySelector('[data-job-field="jp"]');
-  const mlInput = card.querySelector('[data-job-field="masterLevel"]');
+  const level = clampNumber(
+    card.querySelector('[data-job-field="level"]').value, 1, 99, 1
+  );
 
-  const level = clampNumber(levelInput.value, 1, 99, 1);
-  const jp = clampNumber(jpInput.value, 0, 2100, 0);
-  const ml = clampNumber(mlInput.value, 0, 50, 0);
+  const jp = clampNumber(
+    card.querySelector('[data-job-field="jp"]').value, 0, 2100, 0
+  );
+
+  const ml = clampNumber(
+    card.querySelector('[data-job-field="masterLevel"]').value, 0, 50, 0
+  );
 
   const bar = card.querySelector(".ffxi-job-progress > div");
   const stars = card.querySelector(`[data-stars="${code}"]`);
+  const rank = card.querySelector(".ffxi-job-rank");
 
   if (bar) {
     bar.style.width = `${jp / 2100 * 100}%`;
@@ -739,12 +919,33 @@ function updateJobCardPreview(event) {
     "mastery-gold"
   );
 
+  let tier = "";
+  let rankText = "";
+
   if (ml >= 50) {
-    card.classList.add("mastery-gold");
+    tier = "mastery-gold";
+    rankText = "✦ MASTER 50";
   } else if (jp >= 2100) {
-    card.classList.add("mastery-silver");
+    tier = "mastery-silver";
+    rankText = "★★★ JOB MASTER";
   } else if (level >= 99) {
-    card.classList.add("mastery-bronze");
+    tier = "mastery-bronze";
+    rankText = "LEVEL 99";
+  }
+
+  if (tier) {
+    card.classList.add(tier);
+
+    if (rank) {
+      rank.textContent = rankText;
+    } else {
+      const badge = document.createElement("div");
+      badge.className = "ffxi-job-rank";
+      badge.textContent = rankText;
+      card.querySelector(".ffxi-job-card-head").appendChild(badge);
+    }
+  } else if (rank) {
+    rank.remove();
   }
 }
 
