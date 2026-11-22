@@ -107,7 +107,7 @@ async function loadProgress() {
 
   currentUser = authData.user;
 
-  // Charakterverwaltung unabhängig von der alten Checkliste laden.
+  // Charakterverwaltung laden
   try {
     await initCharacters();
   } catch (error) {
@@ -116,10 +116,9 @@ async function loadProgress() {
       "Charaktere konnten nicht geladen werden: " + error.message;
   }
 
-  // Charakterbezogene To-dos laden.
+  // Charakterbezogene To-dos laden
   if (typeof loadCharacterTodos === "function" && activeCharacter) {
     await loadCharacterTodos();
-  }
   }
 
   document.getElementById("auth-panel").style.display = "none";
