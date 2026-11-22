@@ -391,20 +391,24 @@ selectCharacter = function(id) {
 
 injectCollectionStyles();
 
+
 function initCollectionNavigation() {
   const toggle = document.getElementById("collection-menu-toggle");
   const submenu = document.getElementById("collection-submenu");
-  const arrow = document.getElementById("collection-menu-arrow");
 
   if (!toggle || !submenu || toggle.dataset.initialized) return;
 
   toggle.dataset.initialized = "true";
 
   toggle.addEventListener("click", () => {
-    submenu.classList.toggle("open");
+    const wasOpen = submenu.classList.contains("open");
 
-    if (arrow) {
-      arrow.textContent = submenu.classList.contains("open") ? "▴" : "▾";
+    showPage("collection");
+
+    if (wasOpen) {
+      submenu.classList.remove("open");
+      toggle.classList.remove("active");
+      document.getElementById("collection-menu-arrow").textContent = "▾";
     }
   });
 
@@ -412,14 +416,6 @@ function initCollectionNavigation() {
     button.addEventListener("click", () => {
       selectedCollectionType = button.dataset.collectionType;
       selectedCollectionCategory = "all";
-
-      submenu.querySelectorAll("button").forEach(item => {
-        item.classList.toggle("active", item === button);
-      });
-
-      submenu.classList.add("open");
-
-      if (arrow) arrow.textContent = "▴";
 
       showPage("collection");
       renderCollection();
