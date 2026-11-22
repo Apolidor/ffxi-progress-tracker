@@ -1201,41 +1201,106 @@ document.querySelectorAll("[data-goto]").forEach(button => {
 });
 
 function showPage(id) {
+  // Alle Seiten aktualisieren
   document.querySelectorAll(".page").forEach(page => {
     page.classList.toggle("active", page.id === id);
   });
-  document.querySelectorAll("[data-page]").forEach(button => {
-    button.classList.toggle("active", button.dataset.page === id);
+
+  // Alle Navigationspunkte zurücksetzen
+  document.querySelectorAll(".nav, .equipment-submenu button, #collection-submenu button")
+    .forEach(button => {
+      button.classList.remove("active");
+    });
+
+  // Hauptmenüpunkt für die aktuelle Seite markieren
+  const directButton = document.querySelector(
+    `.nav[data-page="${id}"]`
+  );
+
+  if (directButton) {
+    directButton.classList.add("active");
+  }
+
+  // Alle Untermenüs zunächst schließen
+  const submenus = [
+    "equipment-submenu",
+    "weapons-submenu",
+    "goals-submenu",
+    "collection-submenu"
+  ];
+
+  submenus.forEach(menuId => {
+    document.getElementById(menuId)?.classList.remove("open");
   });
+
+  // Alle Menü-Pfeile zurücksetzen
+  [
+    "equipment-menu-arrow",
+    "weapons-menu-arrow",
+    "goals-menu-arrow",
+    "collection-menu-arrow"
+  ].forEach(arrowId => {
+    const arrow = document.getElementById(arrowId);
+    if (arrow) arrow.textContent = "▾";
+  });
+
+  // Passende Oberkategorie und Untermenü aktivieren
+  const submenuMap = {
+    equipment: ["equipment-submenu", "equipment-menu-toggle", "equipment-menu-arrow"],
+    weapons: ["weapons-submenu", "weapons-menu-toggle", "weapons-menu-arrow"],
+    goals: ["goals-submenu", "goals-menu-toggle", "goals-menu-arrow"],
+    limbus: ["goals-submenu", "goals-menu-toggle", "goals-menu-arrow"],
+    coalitions: ["goals-submenu", "goals-menu-toggle", "goals-menu-arrow"],
+    "sheol-gaol": ["goals-submenu", "goals-menu-toggle", "goals-menu-arrow"],
+    routines: ["goals-submenu", "goals-menu-toggle", "goals-menu-arrow"]
+  };
+
+  const submenuInfo = submenuMap[id];
+
+  if (submenuInfo) {
+    const [submenuId, toggleId, arrowId] = submenuInfo;
+
+    document.getElementById(submenuId)?.classList.add("open");
+    document.getElementById(toggleId)?.classList.add("active");
+
+    const arrow = document.getElementById(arrowId);
+    if (arrow) arrow.textContent = "▴";
+
+    const activeSubButton = document.querySelector(
+      `#${submenuId} [data-page="${id}"]`
+    );
+
+    if (activeSubButton) {
+      activeSubButton.classList.add("active");
+    }
+  }
+
+  // Sammlung
+  if (id === "collection") {
+    document.getElementById("collection-submenu")?.classList.add("open");
+    document.getElementById("collection-menu-toggle")?.classList.add("active");
+    document.getElementById("collection-menu-arrow").textContent = "▴";
+  }
+
+  // Tracker laden
   if (id === "limbus" && typeof loadLimbusProgress === "function") {
     loadLimbusProgress();
   }
+
   if (id === "routines" && typeof loadRoutineProgress === "function") {
     loadRoutineProgress();
   }
+
   if (id === "coalitions" && typeof loadCoalitionProgress === "function") {
     loadCoalitionProgress();
   }
+
   if (id === "sheol-gaol" && typeof loadSheolGaolProgress === "function") {
     loadSheolGaolProgress();
   }
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
-
-document.getElementById("gear-list").innerHTML = gearSlots.map(slot => `
-  <div class="goal">
-    <span class="accent">◇</span>
-    <div><span>${slot}</span><small>Noch kein Gegenstand eingetragen</small></div>
-  </div>
-`).join("");
-
-document.getElementById("reset").addEventListener("click", () => {
-  if (confirm("Alle Demo-Checklisten zurücksetzen?")) {
-    completed = [];
-    localStorage.removeItem("ffxi_demo_goals");
-    refresh();
-  }
-});
 
 function refresh() {
   // Nur Ziele aktualisieren – Jobs werden von characters.js verwaltet
