@@ -116,27 +116,10 @@ async function loadProgress() {
       "Charaktere konnten nicht geladen werden: " + error.message;
   }
 
-  // Alte Checkliste laden.
-  const { data, error } = await db
-    .from("player_progress")
-    .select("data")
-    .eq("user_id", currentUser.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Progress loading failed:", error);
-    authMessage.textContent =
-      "Checkliste konnte nicht geladen werden: " + error.message;
-  } else {
-    if (data) {
-      completed = Array.isArray(data.data.completedGoals)
-        ? data.data.completedGoals
-        : [];
-    } else {
-      await saveProgress();
-    }
-
-    refresh();
+  // Charakterbezogene To-dos laden.
+  if (typeof loadCharacterTodos === "function" && activeCharacter) {
+    await loadCharacterTodos();
+  }
   }
 
   document.getElementById("auth-panel").style.display = "none";
@@ -170,28 +153,6 @@ async function loadProgress() {
     });
   }
 }
-
-async function saveProgress() {
-  if (!currentUser) return;
-
-  const { error } = await db.from("player_progress").upsert({
-    user_id: currentUser.id,
-    data: { completedGoals: completed },
-    updated_at: new Date().toISOString()
-  });
-
-  if (error) {
-    authMessage.textContent =
-      "Speichern fehlgeschlagen: " + error.message;
-  }
-}
-
-// Jede Änderung an der Checkliste online speichern.
-document.addEventListener("change", event => {
-  if (event.target.matches("[data-goal]")) {
-    saveProgress();
-  }
-});
 
 db.auth.getSession().then(({ data, error }) => {
   if (error) {
