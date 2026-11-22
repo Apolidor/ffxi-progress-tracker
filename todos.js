@@ -45,6 +45,10 @@ function renderCharacterTodos() {
 
   const pending = characterTodos.filter(todo => !todo.completed);
   const completedCount = characterTodos.length - pending.length;
+  const characterLabel = document.getElementById("todo-character-name");
+  if (characterLabel) {
+    characterLabel.textContent = activeCharacter?.name || "Aktiver Charakter";
+  }
 
   const renderList = (items, showDelete) => {
     if (!items.length) {
