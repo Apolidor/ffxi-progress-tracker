@@ -310,20 +310,28 @@ function populateWeaponsSubmenu() {
   });
 }
 
+
 function initWeaponNavigation() {
   const toggle = document.getElementById("weapons-menu-toggle");
   const submenu = document.getElementById("weapons-submenu");
-  const arrow = document.getElementById("weapons-menu-arrow");
 
   if (!toggle || !submenu || toggle.dataset.initialized) return;
 
   toggle.dataset.initialized = "true";
 
   toggle.addEventListener("click", () => {
-    submenu.classList.toggle("open");
+    const wasOpen = submenu.classList.contains("open");
 
-    if (arrow) {
-      arrow.textContent = submenu.classList.contains("open") ? "▴" : "▾";
+    showPage("weapons");
+
+    if (wasOpen) {
+      submenu.classList.remove("open");
+      toggle.classList.remove("active");
+      document.getElementById("weapons-menu-arrow").textContent = "▾";
+      document.querySelectorAll(".nav").forEach(button => {
+        if (button !== toggle) button.classList.remove("active");
+      });
+      document.getElementById("weapons").classList.remove("active");
     }
 
     if (equipmentItemsCache === null) {
@@ -337,6 +345,7 @@ function initWeaponNavigation() {
     }
   });
 }
+
 
 let weaponCollectionCategory = "all";
 let weaponCollectionOwned = {};
@@ -572,20 +581,25 @@ function renderWeapons() {
 initWeaponNavigation();
 
 
+
 function initEquipmentNavigation() {
   const toggle = document.getElementById("equipment-menu-toggle");
   const submenu = document.getElementById("equipment-submenu");
-  const arrow = document.getElementById("equipment-menu-arrow");
 
   if (!toggle || !submenu || toggle.dataset.initialized) return;
 
   toggle.dataset.initialized = "true";
 
   toggle.addEventListener("click", () => {
-    submenu.classList.toggle("open");
+    const wasOpen = submenu.classList.contains("open");
 
-    if (arrow) {
-      arrow.textContent = submenu.classList.contains("open") ? "▴" : "▾";
+    showPage("equipment");
+
+    if (wasOpen) {
+      submenu.classList.remove("open");
+      toggle.classList.remove("active");
+      document.getElementById("equipment-menu-arrow").textContent = "▾";
+      document.getElementById("equipment").classList.remove("active");
     }
 
     if (equipmentItemsCache === null) {
@@ -596,6 +610,7 @@ function initEquipmentNavigation() {
     }
   });
 }
+
 
 
 function defaultEquipmentProgress() {
