@@ -437,6 +437,28 @@ function injectJobStyles() {
       color: var(--muted);
     }
 
+        .ffxi-job-card {
+      transition: border-color .25s, box-shadow .25s;
+    }
+
+    /* Bronze: Level 99 */
+    .ffxi-job-card.mastery-bronze {
+      border: 1px solid #cd7f32;
+      box-shadow: 0 0 8px rgba(205, 127, 50, 0.22);
+    }
+
+    /* Silber: 2100 Job Points */
+    .ffxi-job-card.mastery-silver {
+      border: 1px solid #c0c0c0;
+      box-shadow: 0 0 10px rgba(192, 192, 192, 0.28);
+    }
+
+    /* Gold: Master Level 50 */
+    .ffxi-job-card.mastery-gold {
+      border: 1px solid #ffd700;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.32);
+    }
+
     .ffxi-job-fields {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -624,8 +646,17 @@ function renderCharacterJobs() {
 function renderJobCard(job, progress) {
   const mastered = progress.jp >= 2100;
 
+  let tier = "";
+  if (progress.masterLevel >= 50) {
+    tier = "mastery-gold";
+  } else if (progress.jp >= 2100) {
+    tier = "mastery-silver";
+  } else if (progress.level >= 99) {
+    tier = "mastery-bronze";
+  }
+
   return `
-    <div class="ffxi-job-card" data-job-card="${job.code}">
+    <div class="ffxi-job-card ${tier}" data-job-card="${job.code}">
       <div class="ffxi-job-card-head">
         <div class="ffxi-job-card-icon">${job.icon}</div>
         <div>
@@ -681,8 +712,13 @@ function updateJobCardPreview(event) {
 
   if (!card) return;
 
+  const levelInput = card.querySelector('[data-job-field="level"]');
   const jpInput = card.querySelector('[data-job-field="jp"]');
+  const mlInput = card.querySelector('[data-job-field="masterLevel"]');
+
+  const level = clampNumber(levelInput.value, 1, 99, 1);
   const jp = clampNumber(jpInput.value, 0, 2100, 0);
+  const ml = clampNumber(mlInput.value, 0, 50, 0);
 
   const bar = card.querySelector(".ffxi-job-progress > div");
   const stars = card.querySelector(`[data-stars="${code}"]`);
@@ -695,6 +731,20 @@ function updateJobCardPreview(event) {
     stars.textContent = jp >= 2100
       ? "★★★ Job Master"
       : `${jp} / 2100 JP`;
+  }
+
+  card.classList.remove(
+    "mastery-bronze",
+    "mastery-silver",
+    "mastery-gold"
+  );
+
+  if (ml >= 50) {
+    card.classList.add("mastery-gold");
+  } else if (jp >= 2100) {
+    card.classList.add("mastery-silver");
+  } else if (level >= 99) {
+    card.classList.add("mastery-bronze");
   }
 }
 
