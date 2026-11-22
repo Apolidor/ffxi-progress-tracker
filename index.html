@@ -795,6 +795,40 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
 .sg-summary .tag { display: inline-block; }
 .sg-status { margin-top: 14px; }
 
+
+.todo-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.todo-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.todo-form input:focus {
+  outline: 1px solid var(--accent);
+}
+
+.todo-delete {
+  flex-shrink: 0;
+  color: #d98b8b !important;
+  padding: 4px 10px !important;
+}
+
+@media (max-width: 500px) {
+  .todo-form {
+    flex-direction: column;
+  }
+}
+
+
 </style>
 </head>
 <body>
@@ -970,17 +1004,35 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       </div>
     </section>
 
+    
     <section class="page" id="goals">
       <div class="welcome">
         <div class="eyebrow">YOUR ADVENTURE</div>
         <h1>Ziele & Erfolge</h1>
-        <p>Markiere deine erreichten Meilensteine.</p>
+        <p>Deine persönlichen Aufgaben für diesen Charakter.</p>
       </div>
+    
       <div class="card">
-        <div class="section-head"><h2>Persönliche Checkliste</h2><span class="tag">Interaktiv</span></div>
+        <div class="section-head">
+          <h2>Persönliche Checkliste</h2>
+          <span class="tag" id="todo-character-name">Aktiver Charakter</span>
+        </div>
+    
+        <form id="todo-form" class="todo-form">
+          <input
+            id="todo-input"
+            type="text"
+            maxlength="120"
+            placeholder="Neues To-do eingeben ..."
+            required>
+          <button type="submit" class="action">+ Hinzufügen</button>
+        </form>
+    
         <div id="all-goals"></div>
+        <div id="todo-status" class="ffxi-save-status" role="status"></div>
       </div>
     </section>
+
 
     <section class="page" id="limbus">
       <div class="welcome">
