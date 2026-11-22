@@ -288,6 +288,9 @@ function selectCharacter(id) {
   weaponCollectionOwned = {};
   
   if (!activeCharacter) return;
+  if (typeof loadCharacterTodos === "function") {
+    loadCharacterTodos();
+  }
 
   activeCharacter.jobs = normalizeJobProgress(activeCharacter.jobs);
 
