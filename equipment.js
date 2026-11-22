@@ -311,6 +311,46 @@ function populateWeaponsSubmenu() {
 }
 
 
+
+function initEquipmentNavigation() {
+  const toggle = document.getElementById("equipment-menu-toggle");
+  const submenu = document.getElementById("equipment-submenu");
+
+  if (!toggle || !submenu || toggle.dataset.initialized) return;
+
+  toggle.dataset.initialized = "true";
+
+  toggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const wasOpen = submenu.classList.contains("open");
+
+    // Andere Menüs schließen
+    document.querySelectorAll(
+      "#weapons-submenu, #goals-submenu, #collection-submenu"
+    ).forEach(menu => menu.classList.remove("open"));
+
+    if (wasOpen) {
+      submenu.classList.remove("open");
+      toggle.classList.remove("active");
+      document.getElementById("equipment-menu-arrow").textContent = "▾";
+      return;
+    }
+
+    submenu.classList.add("open");
+    toggle.classList.add("active");
+    document.getElementById("equipment-menu-arrow").textContent = "▴";
+
+    if (equipmentItemsCache === null) {
+      loadEquipmentItems();
+    } else {
+      populateEquipmentSubmenu();
+      renderEquipment();
+    }
+  });
+}
+
 function initWeaponNavigation() {
   const toggle = document.getElementById("weapons-menu-toggle");
   const submenu = document.getElementById("weapons-submenu");
@@ -319,20 +359,27 @@ function initWeaponNavigation() {
 
   toggle.dataset.initialized = "true";
 
-  toggle.addEventListener("click", () => {
+  toggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
     const wasOpen = submenu.classList.contains("open");
 
-    showPage("weapons");
+    // Andere Menüs schließen
+    document.querySelectorAll(
+      "#equipment-submenu, #goals-submenu, #collection-submenu"
+    ).forEach(menu => menu.classList.remove("open"));
 
     if (wasOpen) {
       submenu.classList.remove("open");
       toggle.classList.remove("active");
       document.getElementById("weapons-menu-arrow").textContent = "▾";
-      document.querySelectorAll(".nav").forEach(button => {
-        if (button !== toggle) button.classList.remove("active");
-      });
-      document.getElementById("weapons").classList.remove("active");
+      return;
     }
+
+    submenu.classList.add("open");
+    toggle.classList.add("active");
+    document.getElementById("weapons-menu-arrow").textContent = "▴";
 
     if (equipmentItemsCache === null) {
       loadEquipmentItems().then(() => {
@@ -345,6 +392,10 @@ function initWeaponNavigation() {
     }
   });
 }
+
+initEquipmentNavigation();
+initWeaponNavigation();
+
 
 
 let weaponCollectionCategory = "all";
@@ -579,39 +630,6 @@ function renderWeapons() {
 }
 
 initWeaponNavigation();
-
-
-
-function initEquipmentNavigation() {
-  const toggle = document.getElementById("equipment-menu-toggle");
-  const submenu = document.getElementById("equipment-submenu");
-
-  if (!toggle || !submenu || toggle.dataset.initialized) return;
-
-  toggle.dataset.initialized = "true";
-
-  toggle.addEventListener("click", () => {
-    const wasOpen = submenu.classList.contains("open");
-
-    showPage("equipment");
-
-    if (wasOpen) {
-      submenu.classList.remove("open");
-      toggle.classList.remove("active");
-      document.getElementById("equipment-menu-arrow").textContent = "▾";
-      document.getElementById("equipment").classList.remove("active");
-    }
-
-    if (equipmentItemsCache === null) {
-      loadEquipmentItems();
-    } else {
-      populateEquipmentSubmenu();
-      renderEquipment();
-    }
-  });
-}
-
-
 
 function defaultEquipmentProgress() {
   const result = {};
@@ -1047,8 +1065,6 @@ function renderEquipment() {
     });
   });
 }
-
-initEquipmentNavigation();
 
 function initGoalsNavigation() {
   const toggle = document.getElementById("goals-menu-toggle");
