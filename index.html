@@ -1186,33 +1186,11 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
 
 <script>
 
-const goals = [
-  { id: "g1", name: "Hauptjob weiterentwickeln", detail: "Job-Level · Paladin" },
-  { id: "g2", name: "Ausrüstungsset vervollständigen", detail: "Ausrüstung · Endgame" },
-  { id: "g3", name: "Neue Mission abschließen", detail: "Missionen · Story" },
-  { id: "g4", name: "Seltenen Gegenstand erhalten", detail: "Sammlung · Drops" },
-  { id: "g5", name: "Ein neues Gebiet erkunden", detail: "Erkundung · Vana'diel" }
-];
-
 const gearSlots = [
   "Hauptwaffe", "Nebenwaffe", "Fernwaffe", "Kopf",
   "Körper", "Hände", "Beine", "Füße", "Hals", "Ohrringe",
   "Ringe", "Rücken", "Taille"
 ];
-
-let completed = JSON.parse(localStorage.getItem("ffxi_demo_goals") || "[]");
-
-function renderGoals(target) {
-  document.getElementById(target).innerHTML = goals.map(goal => `
-    <div class="goal ${completed.includes(goal.id) ? "done" : ""}">
-      <input type="checkbox" id="${target}-${goal.id}" data-goal="${goal.id}"
-        ${completed.includes(goal.id) ? "checked" : ""}>
-      <label for="${target}-${goal.id}">
-        <span>${goal.name}</span><small>${goal.detail}</small>
-      </label>
-    </div>
-  `).join("");
-}
 
 document.querySelectorAll("[data-page]").forEach(button => {
   button.addEventListener("click", () => showPage(button.dataset.page));
