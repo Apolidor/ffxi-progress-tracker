@@ -750,6 +750,51 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
 }
 
   
+
+/* Sheol Gaol – kompakte Boss-Meilensteine */
+.sheol-gaol-groups { display: grid; gap: 14px; }
+.sheol-gaol-group { padding: 0; overflow: hidden; }
+.sheol-gaol-group h2 { padding: 15px 18px; background: var(--panel2); }
+.sg-table-wrap { overflow-x: auto; }
+.sg-table { min-width: 570px; }
+.sg-head, .sg-row {
+  display: grid;
+  grid-template-columns: minmax(145px, 1.5fr) repeat(6, minmax(55px, .55fr));
+  align-items: center;
+  gap: 5px;
+  padding: 9px 14px;
+}
+.sg-head {
+  color: var(--muted);
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.sg-row { border-bottom: 1px solid var(--border); }
+.sg-row:last-child { border-bottom: 0; }
+.sg-boss { font-size: 13px; font-weight: 650; white-space: nowrap; }
+.sg-boss small { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
+.sg-milestone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.sg-milestone input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sg-row:has(.sg-milestone input:checked) .sg-boss { color: var(--accent); }
+.sg-summary { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+.sg-summary .tag { display: inline-block; }
+.sg-status { margin-top: 14px; }
+
 </style>
 </head>
 <body>
@@ -787,6 +832,9 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
         </button>
         <button type="button" data-page="coalitions">
           Adoulin Tracker
+        </button>
+        <button type="button" data-page="sheol-gaol">
+          Sheol Gaol Tracker
         </button>
         <button type="button" data-page="routines">
           Daily / Weekly / Monthly
@@ -976,6 +1024,18 @@ button.action:hover { border-color: var(--accent); color: var(--accent); }
       <div id="coalitions-status" class="notice" style="display:none"></div>
     </section>
 
+    <section class="page" id="sheol-gaol">
+      <div class="welcome">
+        <div class="eyebrow">ODYSSEY · SHEOL GAOL</div>
+        <h1>Sheol Gaol Tracker</h1>
+        <p>Verfolge deine besiegten Bosse und Vengeance-Meilensteine.</p>
+      </div>
+      <div id="sheol-gaol-content">
+        <p class="empty">Sheol-Gaol-Fortschritt wird geladen ...</p>
+      </div>
+      <div id="sheol-gaol-status" class="notice sg-status" style="display:none"></div>
+    </section>
+
 
     <section class="page" id="routines">
       <div class="welcome">
@@ -1126,6 +1186,9 @@ function showPage(id) {
   if (id === "coalitions" && typeof loadCoalitionProgress === "function") {
     loadCoalitionProgress();
   }
+  if (id === "sheol-gaol" && typeof loadSheolGaolProgress === "function") {
+    loadSheolGaolProgress();
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1181,5 +1244,6 @@ function refresh() {
     <script src="collection.js"></script>
     <script src="routines.js"></script>
     <script src="coalitions.js"></script>
+    <script src="sheol-gaol.js"></script>
 </body>
 </html>
