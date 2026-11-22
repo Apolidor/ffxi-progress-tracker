@@ -1193,6 +1193,11 @@ const gearSlots = [
 ];
 
 document.querySelectorAll("[data-page]").forEach(button => {
+  if (
+    button.id === "equipment-menu-toggle" ||
+    button.id === "weapons-menu-toggle"
+  ) return;
+
   button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
